@@ -31,7 +31,6 @@ defined('MOODLE_INTERNAL') || die();
  * Class for calendar type plugins.
  */
 class calendartype extends base {
-
     public function is_uninstall_allowed() {
         $warning = $this->get_uninstall_extra_warning();
         return $warning == '';
@@ -72,10 +71,16 @@ class calendartype extends base {
 
         $settings = null;
         $systemcontext = \context_system::instance();
-        if (($hassiteconfig) &&
-            file_exists($this->full_path('settings.php'))) {
-            $settings = new admin_settingpage($section, $this->displayname,
-                'moodle/site:config', $this->is_enabled() === false);
+        if (
+            ($hassiteconfig) &&
+            file_exists($this->full_path('settings.php'))
+        ) {
+            $settings = new admin_settingpage(
+                $section,
+                $this->displayname,
+                'moodle/site:config',
+                $this->is_enabled() === false
+            );
             include($this->full_path('settings.php')); // This may also set $settings to null.
         }
         if ($settings) {

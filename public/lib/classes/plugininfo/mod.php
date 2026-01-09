@@ -31,7 +31,6 @@ use part_of_admin_tree;
  * Class for activity modules
  */
 class mod extends base {
-
     public static function plugintype_supports_disabling(): bool {
         return true;
     }
@@ -42,7 +41,7 @@ class mod extends base {
      */
     public static function get_enabled_plugins() {
         global $DB;
-        return $DB->get_records_menu('modules', array('visible'=>1), 'name ASC', 'name, name AS val');
+        return $DB->get_records_menu('modules', ['visible' => 1], 'name ASC', 'name, name AS val');
     }
 
     public static function enable_plugin(string $pluginname, int $enabled): bool {
@@ -78,7 +77,9 @@ class mod extends base {
 
                 // Increment course.cacherev for courses where we just made something visible.
                 // This will force cache rebuilding on the next request.
-                increment_revision_number('course', 'cacherev',
+                increment_revision_number(
+                    'course',
+                    'cacherev',
                     "id IN (SELECT DISTINCT course
                                        FROM {course_modules}
                                       WHERE visible = 1 AND module = ?)",
@@ -92,7 +93,9 @@ class mod extends base {
                 $DB->execute($sql, [$module->id]);
                 // Increment course.cacherev for courses where we just made something invisible.
                 // This will force cache rebuilding on the next request.
-                increment_revision_number('course', 'cacherev',
+                increment_revision_number(
+                    'course',
+                    'cacherev',
                     'id IN (SELECT DISTINCT course
                                        FROM {course_modules}
                                       WHERE visibleold = 1 AND module = ?)',
@@ -185,18 +188,18 @@ class mod extends base {
      */
     public function get_uninstall_extra_warning() {
         global $DB;
-        
+
         $result = plugin_supports('mod', $this->name, FEATURE_CAN_UNINSTALL, true);
 
         if ($result == false) {
             return "FEATURE_CAN_UNINSTALL set to false by: mod_$this->name. This plugin cannot be uninstalled.";
         }
 
-        if (!$module = $DB->get_record('modules', array('name'=>$this->name))) {
+        if (!$module = $DB->get_record('modules', ['name' => $this->name])) {
             return '';
         }
 
-        if (!$count = $DB->count_records('course_modules', array('module'=>$module->id))) {
+        if (!$count = $DB->count_records('course_modules', ['module' => $module->id])) {
             return '';
         }
 
@@ -207,9 +210,16 @@ class mod extends base {
                      WHERE module = :mid
                   GROUP BY course
                   ) c";
-        $courses = $DB->count_records_sql($sql, array('mid'=>$module->id));
+        $courses = $DB->count_records_sql($sql, ['mid' => $module->id]);
 
-        return '<p>'.get_string('uninstallextraconfirmmod', 'core_plugin', array('instances'=>$count, 'courses'=>$courses)).'</p>';
+        return '<p>' .
+            get_string(
+                'uninstallextraconfirmmod',
+                'core_plugin',
+                ['instances' => $count],
+                ['courses' => $courses]
+            ) .
+            '</p>';
     }
 
     /**
@@ -223,13 +233,13 @@ class mod extends base {
     public function uninstall_cleanup() {
         global $DB, $CFG;
 
-        if (!$module = $DB->get_record('modules', array('name' => $this->name))) {
+        if (!$module = $DB->get_record('modules', ['name' => $this->name])) {
             parent::uninstall_cleanup();
             return;
         }
 
         // Delete all the relevant instances from all course sections.
-        if ($coursemods = $DB->get_records('course_modules', array('module' => $module->id))) {
+        if ($coursemods = $DB->get_records('course_modules', ['module' => $module->id])) {
             foreach ($coursemods as $coursemod) {
                 // Do not verify results, there is not much we can do anyway.
                 delete_mod_from_section($coursemod->id, $coursemod->section);
@@ -238,14 +248,17 @@ class mod extends base {
 
         // Increment course.cacherev for courses that used this module.
         // This will force cache rebuilding on the next request.
-        increment_revision_number('course', 'cacherev',
+        increment_revision_number(
+            'course',
+            'cacherev',
             "id IN (SELECT DISTINCT course
                       FROM {course_modules}
                      WHERE module=?)",
-            array($module->id));
+            [$module->id]
+        );
 
         // Delete all the course module records.
-        $DB->delete_records('course_modules', array('module' => $module->id));
+        $DB->delete_records('course_modules', ['module' => $module->id]);
 
         // Delete module contexts.
         if ($coursemods) {
@@ -255,10 +268,10 @@ class mod extends base {
         }
 
         // Delete the module entry itself.
-        $DB->delete_records('modules', array('name' => $module->name));
+        $DB->delete_records('modules', ['name' => $module->name]);
 
         // Cleanup the gradebook.
-        require_once($CFG->libdir.'/gradelib.php');
+        require_once($CFG->libdir . '/gradelib.php');
         grade_uninstalled_module($module->name);
 
         // Do not look for legacy $module->name . '_uninstall any more,

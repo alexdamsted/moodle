@@ -34,7 +34,6 @@ namespace core\plugininfo;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class qbank extends base {
-
     public static function plugintype_supports_disabling(): bool {
         return true;
     }
@@ -57,7 +56,7 @@ class qbank extends base {
         }
 
         return '';
-    } 
+    }
 
     public static function get_manage_url(): \moodle_url {
         return new \moodle_url('/admin/settings.php', ['section' => 'manageqbanks']);
@@ -93,7 +92,7 @@ class qbank extends base {
         // Filter to return only enabled plugins.
         $enabled = [];
         foreach ($plugins as $plugin) {
-            $qbankinfo = $pluginmanager->get_plugin_info('qbank_'.$plugin);
+            $qbankinfo = $pluginmanager->get_plugin_info('qbank_' . $plugin);
             $qbankavailable = $qbankinfo->get_status();
             if ($qbankavailable === \core_plugin_manager::PLUGIN_STATUS_MISSING) {
                 continue;
@@ -143,8 +142,10 @@ class qbank extends base {
             return false;
         }
         $qbankavailable = $qbankinfo->get_status();
-        if ($qbankavailable === \core_plugin_manager::PLUGIN_STATUS_MISSING ||
-                !empty(get_config($fullpluginname, 'disabled'))) {
+        if (
+            $qbankavailable === \core_plugin_manager::PLUGIN_STATUS_MISSING ||
+                !empty(get_config($fullpluginname, 'disabled'))
+        ) {
             return false;
         }
         return true;
@@ -169,8 +170,12 @@ class qbank extends base {
         $settings = null;
         if (file_exists($this->full_path('settings.php'))) {
             if ($this->name !== 'columnsortorder') {
-                $settings = new \admin_settingpage($section, $this->displayname,
-                                    'moodle/site:config', $this->is_enabled() === false);
+                $settings = new \admin_settingpage(
+                    $section,
+                    $this->displayname,
+                    'moodle/site:config',
+                    $this->is_enabled() === false
+                );
             }
             include($this->full_path('settings.php')); // This may also set $settings to null.
         }

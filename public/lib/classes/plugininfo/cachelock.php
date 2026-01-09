@@ -29,7 +29,6 @@ defined('MOODLE_INTERNAL') || die();
  * Class for admin tool plugins
  */
 class cachelock extends base {
-
     public function is_uninstall_allowed() {
         $warning = $this->get_uninstall_extra_warning();
         return $warning == '';

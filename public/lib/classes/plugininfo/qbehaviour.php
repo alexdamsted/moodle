@@ -30,7 +30,6 @@ use moodle_url;
  * Class for question behaviours.
  */
 class qbehaviour extends base {
-
     public static function plugintype_supports_disabling(): bool {
         return true;
     }
@@ -42,15 +41,15 @@ class qbehaviour extends base {
     public static function get_enabled_plugins() {
         $plugins = core_plugin_manager::instance()->get_installed_plugins('qbehaviour');
         if (!$plugins) {
-            return array();
+            return [];
         }
         if ($disabled = get_config('question', 'disabledbehaviours')) {
             $disabled = explode(',', $disabled);
         } else {
-            $disabled = array();
+            $disabled = [];
         }
 
-        $enabled = array();
+        $enabled = [];
         foreach ($plugins as $plugin => $version) {
             if (in_array($plugin, $disabled)) {
                 continue;
@@ -97,7 +96,7 @@ class qbehaviour extends base {
      * Uninstall extra warning.
      *
      * @return string
-     */ 
+     */
     public function get_uninstall_extra_warning() {
         global $DB;
 
@@ -125,7 +124,7 @@ class qbehaviour extends base {
             $disabledbehaviours = explode(',', $disabledbehaviours);
             $disabledbehaviours = array_unique($disabledbehaviours);
         } else {
-            $disabledbehaviours = array();
+            $disabledbehaviours = [];
         }
         if (($key = array_search($this->name, $disabledbehaviours)) !== false) {
             unset($disabledbehaviours[$key]);
@@ -136,7 +135,7 @@ class qbehaviour extends base {
             $behaviourorder = explode(',', $behaviourorder);
             $behaviourorder = array_unique($behaviourorder);
         } else {
-            $behaviourorder = array();
+            $behaviourorder = [];
         }
         if (($key = array_search($this->name, $behaviourorder)) !== false) {
             unset($behaviourorder[$key]);

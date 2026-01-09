@@ -32,7 +32,6 @@ use testable_plugininfo_base;
  * @covers \core_plugin_manager
  */
 final class plugin_manager_test extends \advanced_testcase {
-
     use fake_plugins_test_trait;
 
     public static function setUpBeforeClass(): void {
@@ -946,8 +945,10 @@ final class plugin_manager_test extends \advanced_testcase {
         // Deprecated plugins included in the following.
         $this->assertArrayHasKey('test', $pluginman->get_present_plugins('fulldeprecatedsubtype')); // Plugins on disk.
         $this->assertArrayHasKey('test', $pluginman->get_installed_plugins('fulldeprecatedsubtype')); // Plugins with DB config.
-        $this->assertInstanceOf(\fake_fullfeatured\plugininfo\fulldeprecatedsubtype::class,
-            $pluginman->get_plugin_info('fulldeprecatedsubtype_test'));
+        $this->assertInstanceOf(
+            \fake_fullfeatured\plugininfo\fulldeprecatedsubtype::class,
+            $pluginman->get_plugin_info('fulldeprecatedsubtype_test')
+        );
         $this->assertEquals('Full deprecated subtype test', $pluginman->plugin_name('fulldeprecatedsubtype_test'));
         $this->assertIsString($pluginman->get_plugintype_root('fulldeprecatedsubtype'));
         $this->assertNull($pluginman->can_plugin_be_uninstalled('fulldeprecatedsubtype_test'));
@@ -1087,8 +1088,10 @@ final class plugin_manager_test extends \advanced_testcase {
         // Deprecated plugins included in the following.
         $this->assertArrayHasKey('demo', $pluginman->get_present_plugins('fulldeletedsubtype')); // Plugins on disk.
         $this->assertArrayHasKey('demo', $pluginman->get_installed_plugins('fulldeletedsubtype')); // Plugins with DB config.
-        $this->assertInstanceOf(\fake_fullfeatured\plugininfo\fulldeletedsubtype::class,
-            $pluginman->get_plugin_info('fulldeletedsubtype_demo'));
+        $this->assertInstanceOf(
+            \fake_fullfeatured\plugininfo\fulldeletedsubtype::class,
+            $pluginman->get_plugin_info('fulldeletedsubtype_demo')
+        );
         $this->assertIsString($pluginman->get_plugintype_root('fulldeletedsubtype'));
         $this->assertNull($pluginman->can_plugin_be_uninstalled('fulldeletedsubtype_demo'));
         $uninstallurl = $pluginman->get_uninstall_url('fulldeletedsubtype_demo');

@@ -66,7 +66,7 @@ Examples:
         Run uninstall for mod_assign and mod_forum plugins.
 ";
 
-list($options, $unrecognised) = cli_get_params([
+[$options, $unrecognised] = cli_get_params([
     'help' => false,
     'show-all' => false,
     'show-contrib' => false,
@@ -77,11 +77,11 @@ list($options, $unrecognised) = cli_get_params([
     'showsql' => false,
     'showdebugging' => false,
 ], [
-    'h' => 'help'
+    'h' => 'help',
 ]);
 
 if ($unrecognised) {
-    $unrecognised = implode(PHP_EOL.'  ', $unrecognised);
+    $unrecognised = implode(PHP_EOL . '  ', $unrecognised);
     cli_error(get_string('cliunknowoption', 'core_admin', $unrecognised));
 }
 
@@ -126,9 +126,8 @@ if ($options['purge-missing']) {
     foreach ($plugininfo as $type => $plugins) {
         foreach ($plugins as $name => $plugin) {
             if ($plugin->get_status() === core_plugin_manager::PLUGIN_STATUS_MISSING) {
-
                 $pluginstring = $plugin->component . "\t" . $plugin->displayname;
-                
+
                 $reason = $pluginman->can_plugin_be_uninstalled($component);
                 if ($reason !== null) {
                     cli_writeln("Cannot uninstall {$pluginstring}: {$reason}");

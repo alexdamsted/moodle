@@ -34,7 +34,6 @@ require_once($CFG->dirroot . '/repository/lib.php');
  * Class for repositories
  */
 class repository extends base {
-
     /** @var int Repository state, when it's enabled and visible. */
     public const REPOSITORY_ON = 1;
 
@@ -133,7 +132,7 @@ class repository extends base {
     }
 
     public function get_settings_section_name() {
-        return 'repositorysettings'.$this->name;
+        return 'repositorysettings' . $this->name;
     }
 
     public function load_settings(part_of_admin_tree $adminroot, $parentnodename, $hassiteconfig) {
@@ -144,8 +143,13 @@ class repository extends base {
         if ($hassiteconfig && $this->is_enabled()) {
             // Completely no access to repository setting when it is not enabled.
             $sectionname = $this->get_settings_section_name();
-            $settings = new admin_externalpage($sectionname, $this->displayname,
-                new moodle_url('/admin/repository.php', ['action' => 'edit', 'repos' => $this->name]), 'moodle/site:config', false);
+            $settings = new admin_externalpage(
+                $sectionname,
+                $this->displayname,
+                new moodle_url('/admin/repository.php', ['action' => 'edit', 'repos' => $this->name]),
+                'moodle/site:config',
+                false
+            );
             $adminroot->add($parentnodename, $settings);
         }
     }
@@ -188,7 +192,7 @@ class repository extends base {
      */
     public function uninstall_cleanup() {
         global $CFG;
-        require_once($CFG->dirroot.'/repository/lib.php');
+        require_once($CFG->dirroot . '/repository/lib.php');
 
         $repo = \repository::get_type_by_typename($this->name);
         if ($repo) {

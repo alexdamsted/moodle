@@ -68,10 +68,10 @@ class theme extends base {
     public function uninstall_cleanup() {
         global $DB;
 
-        $DB->set_field('course', 'theme', '', array('theme'=>$this->name));
-        $DB->set_field('course_categories', 'theme', '', array('theme'=>$this->name));
-        $DB->set_field('user', 'theme', '', array('theme'=>$this->name));
-        $DB->set_field('mnet_host', 'theme', '', array('theme'=>$this->name));
+        $DB->set_field('course', 'theme', '', ['theme' => $this->name]);
+        $DB->set_field('course_categories', 'theme', '', ['theme' => $this->name]);
+        $DB->set_field('user', 'theme', '', ['theme' => $this->name]);
+        $DB->set_field('mnet_host', 'theme', '', ['theme' => $this->name]);
 
         if (get_config('core', 'thememobile') === $this->name) {
             unset_config('thememobile');

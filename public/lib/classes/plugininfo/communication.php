@@ -29,7 +29,6 @@ use moodle_url;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class communication extends base {
-
     public static function get_manage_url(): ?moodle_url {
         if (!\core_communication\api::is_available()) {
             return null;
@@ -102,8 +101,12 @@ class communication extends base {
         $section = $this->get_settings_section_name();
         $settings = null;
         if (file_exists($this->full_path('settings.php'))) {
-            $settings = new admin_settingpage($section, $this->displayname,
-                'moodle/site:config', $this->is_enabled() === false);
+            $settings = new admin_settingpage(
+                $section,
+                $this->displayname,
+                'moodle/site:config',
+                $this->is_enabled() === false
+            );
             include($this->full_path('settings.php')); // This may also set $settings to null.
         }
         if ($settings) {
@@ -120,7 +123,7 @@ class communication extends base {
      * Uninstall extra warning.
      *
      * @return string
-     */   
+     */
     public function get_uninstall_extra_warning() {
         if (in_array($this->name, \core_plugin_manager::standard_plugins_list('communication'))) {
             return 'This plugin is required by: core';
@@ -146,5 +149,4 @@ class communication extends base {
         return !($communicationavailable === \core_plugin_manager::PLUGIN_STATUS_MISSING ||
             !empty(get_config($fullpluginname, 'disabled')));
     }
-
 }

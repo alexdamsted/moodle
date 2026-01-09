@@ -31,7 +31,6 @@ use part_of_admin_tree;
  * Class for authentication plugins
  */
 class auth extends base {
-
     public static function plugintype_supports_disabling(): bool {
         return true;
     }
@@ -68,7 +67,7 @@ class auth extends base {
         global $CFG;
 
         // These two are always enabled and can't be disabled.
-        $enabled = array('nologin'=>'nologin', 'manual'=>'manual');
+        $enabled = ['nologin' => 'nologin', 'manual' => 'manual'];
         foreach (explode(',', $CFG->auth) as $auth) {
             $enabled[$auth] = $auth;
         }
@@ -135,8 +134,12 @@ class auth extends base {
         $settings = null;
         if (file_exists($this->full_path('settings.php'))) {
             // TODO: finish implementation of common settings - locking, etc.
-            $settings = new admin_settingpage($section, $this->displayname,
-                'moodle/site:config', $this->is_enabled() === false);
+            $settings = new admin_settingpage(
+                $section,
+                $this->displayname,
+                'moodle/site:config',
+                $this->is_enabled() === false
+            );
             include($this->full_path('settings.php')); // This may also set $settings to null.
         }
 
@@ -150,7 +153,7 @@ class auth extends base {
      * @return moodle_url
      */
     public static function get_manage_url() {
-        return new moodle_url('/admin/settings.php', array('section'=>'manageauths'));
+        return new moodle_url('/admin/settings.php', ['section' => 'manageauths']);
     }
 
     /**
@@ -168,7 +171,7 @@ class auth extends base {
             $auths = explode(',', $CFG->auth);
             $auths = array_unique($auths);
         } else {
-            $auths = array();
+            $auths = [];
         }
         if (($key = array_search($this->name, $auths)) !== false) {
             unset($auths[$key]);

@@ -31,7 +31,6 @@ use part_of_admin_tree;
  * Class for page side blocks
  */
 class block extends base {
-
     public static function plugintype_supports_disabling(): bool {
         return true;
     }
@@ -43,7 +42,7 @@ class block extends base {
     public static function get_enabled_plugins() {
         global $DB;
 
-        return $DB->get_records_menu('block', array('visible'=>1), 'name ASC', 'name, name AS val');
+        return $DB->get_records_menu('block', ['visible' => 1], 'name ASC', 'name, name AS val');
     }
 
     public static function enable_plugin(string $pluginname, int $enabled): bool {
@@ -90,10 +89,8 @@ class block extends base {
 
         if (get_string_manager()->string_exists('pluginname', 'block_' . $this->name)) {
             $this->displayname = get_string('pluginname', 'block_' . $this->name);
-
         } else if (($block = block_instance($this->name)) !== false) {
             $this->displayname = $block->get_title();
-
         } else {
             parent::init_display_name();
         }
@@ -123,8 +120,12 @@ class block extends base {
         $settings = null;
         if ($blockinstance->has_config()) {
             if (file_exists($this->full_path('settings.php'))) {
-                $settings = new admin_settingpage($section, $this->displayname,
-                    'moodle/site:config', $this->is_enabled() === false);
+                $settings = new admin_settingpage(
+                    $section,
+                    $this->displayname,
+                    'moodle/site:config',
+                    $this->is_enabled() === false
+                );
                 include($this->full_path('settings.php')); // This may also set $settings to null.
             }
         }
@@ -154,7 +155,7 @@ class block extends base {
     public function get_uninstall_extra_warning() {
         global $DB;
 
-        if ($this->name === 'settings' or $this->name === 'navigation') {
+        if ($this->name === 'settings' || $this->name === 'navigation') {
             return 'This plugin is required by: core';
         }
 
@@ -176,7 +177,7 @@ class block extends base {
     public function uninstall_cleanup() {
         global $DB, $CFG;
 
-        if ($block = $DB->get_record('block', array('name'=>$this->name))) {
+        if ($block = $DB->get_record('block', ['name' => $this->name])) {
             // Inform block it's about to be deleted.
             $blockobject = block_instance($block->name);
             if ($blockobject) {
@@ -184,13 +185,13 @@ class block extends base {
             }
 
             // First delete instances and related contexts.
-            $instances = $DB->get_records('block_instances', array('blockname' => $block->name));
+            $instances = $DB->get_records('block_instances', ['blockname' => $block->name]);
             foreach ($instances as $instance) {
                 blocks_delete_instance($instance);
             }
 
             // Delete block.
-            $DB->delete_records('block', array('id'=>$block->id));
+            $DB->delete_records('block', ['id' => $block->id]);
         }
 
         parent::uninstall_cleanup();

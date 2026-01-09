@@ -40,24 +40,24 @@ class format extends base {
 
         $plugins = core_plugin_manager::instance()->get_installed_plugins('format');
         if (!$plugins) {
-            return array();
+            return [];
         }
-        $installed = array();
+        $installed = [];
         foreach ($plugins as $plugin => $version) {
-            $installed[] = 'format_'.$plugin;
+            $installed[] = 'format_' . $plugin;
         }
 
-        list($installed, $params) = $DB->get_in_or_equal($installed, SQL_PARAMS_NAMED);
+        [$installed, $params] = $DB->get_in_or_equal($installed, SQL_PARAMS_NAMED);
         $disabled = $DB->get_records_select('config_plugins', "plugin $installed AND name = 'disabled'", $params, 'plugin ASC');
         foreach ($disabled as $conf) {
             if (empty($conf->value)) {
                 continue;
             }
-            list($type, $name) = explode('_', $conf->plugin, 2);
+            [$type, $name] = explode('_', $conf->plugin, 2);
             unset($plugins[$name]);
         }
 
-        $enabled = array();
+        $enabled = [];
         foreach ($plugins as $plugin => $version) {
             $enabled[$plugin] = $plugin;
         }
@@ -103,11 +103,11 @@ class format extends base {
      */
     public static function get_plugins($type, $typerootdir, $typeclass, $pluginman) {
         global $CFG;
-        require_once($CFG->dirroot.'/course/lib.php');
+        require_once($CFG->dirroot . '/course/lib.php');
 
         $formats = parent::get_plugins($type, $typerootdir, $typeclass, $pluginman);
         $order = get_sorted_course_formats();
-        $sortedformats = array();
+        $sortedformats = [];
         foreach ($order as $formatname) {
             $sortedformats[$formatname] = $formats[$formatname];
         }
@@ -152,7 +152,7 @@ class format extends base {
      * @return moodle_url
      */
     public static function get_manage_url() {
-        return new moodle_url('/admin/settings.php', array('section'=>'manageformats'));
+        return new moodle_url('/admin/settings.php', ['section' => 'manageformats']);
     }
 
     /**
@@ -167,17 +167,19 @@ class format extends base {
             return 'This plugin is required by: core';
         }
 
-        $coursecount = $DB->count_records('course', array('format' => $this->name));
+        $coursecount = $DB->count_records('course', ['format' => $this->name]);
 
         if (!$coursecount) {
             return '';
         }
 
-        $defaultformat = $this->pluginman->plugin_name('format_'.get_config('moodlecourse', 'format'));
+        $defaultformat = $this->pluginman->plugin_name('format_' . get_config('moodlecourse', 'format'));
         $message = get_string(
-            'formatuninstallwithcourses', 'core_admin',
-            (object)array('count' => $coursecount, 'format' => $this->displayname,
-                'defaultformat' => $defaultformat));
+            'formatuninstallwithcourses',
+            'core_admin',
+            (object)['count' => $coursecount, 'format' => $this->displayname,
+            'defaultformat' => $defaultformat]
+        );
 
         return $message;
     }
@@ -194,15 +196,15 @@ class format extends base {
         global $DB;
 
         if (($defaultformat = get_config('moodlecourse', 'format')) && $defaultformat !== $this->name) {
-            $courses = $DB->get_records('course', array('format' => $this->name), 'id');
-            $data = (object)array('id' => null, 'format' => $defaultformat);
+            $courses = $DB->get_records('course', ['format' => $this->name], 'id');
+            $data = (object)['id' => null, 'format' => $defaultformat];
             foreach ($courses as $record) {
                 $data->id = $record->id;
                 update_course($data);
             }
         }
 
-        $DB->delete_records('course_format_options', array('format' => $this->name));
+        $DB->delete_records('course_format_options', ['format' => $this->name]);
 
         parent::uninstall_cleanup();
     }

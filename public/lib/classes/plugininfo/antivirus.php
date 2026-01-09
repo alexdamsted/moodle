@@ -35,7 +35,6 @@ use part_of_admin_tree;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class antivirus extends base {
-
     public static function plugintype_supports_disabling(): bool {
         return true;
     }
@@ -48,10 +47,10 @@ class antivirus extends base {
         global $CFG;
 
         if (empty($CFG->antiviruses)) {
-            return array();
+            return [];
         }
 
-        $enabled = array();
+        $enabled = [];
         foreach (explode(',', $CFG->antiviruses) as $antivirus) {
             $enabled[$antivirus] = $antivirus;
         }
@@ -158,7 +157,7 @@ class antivirus extends base {
      * @return moodle_url
      */
     public static function get_manage_url() {
-        return new moodle_url('/admin/settings.php', array('section' => 'manageantiviruses'));
+        return new moodle_url('/admin/settings.php', ['section' => 'manageantiviruses']);
     }
 
     /**
@@ -171,7 +170,7 @@ class antivirus extends base {
             $antiviruses = explode(',', $CFG->antiviruses);
             $antiviruses = array_unique($antiviruses);
         } else {
-            $antiviruses = array();
+            $antiviruses = [];
         }
         if (($key = array_search($this->name, $antiviruses)) !== false) {
             unset($antiviruses[$key]);

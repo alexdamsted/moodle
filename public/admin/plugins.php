@@ -1,5 +1,4 @@
 <?php
-
 // This file is part of Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
@@ -39,7 +38,7 @@ $installupdatex = optional_param('installupdatex', false, PARAM_BOOL); // Instal
 $confirminstallupdate = optional_param('confirminstallupdate', false, PARAM_BOOL); // Available update(s) install confirmed?
 
 // NOTE: do not use admin_externalpage_setup() here because it loads
-//       full admin tree which is not possible during uninstallation.
+// full admin tree which is not possible during uninstallation.
 
 require_admin();
 $syscontext = context_system::instance();
@@ -52,7 +51,6 @@ $pluginman = core_plugin_manager::instance();
 $PAGE->set_primary_active_tab('siteadminnode');
 
 if ($uninstall) {
-
     if (!$confirmed) {
         admin_externalpage_setup('pluginsoverview');
     } else {
@@ -69,13 +67,18 @@ if ($uninstall) {
 
     // Make sure we know the plugin.
     if (is_null($pluginfo)) {
-        throw new moodle_exception('err_uninstalling_unknown_plugin', 'core_plugin', '', array('plugin' => $uninstall),
-            'core_plugin_manager::get_plugin_info() returned null for the plugin to be uninstalled');
+        throw new moodle_exception(
+            'err_uninstalling_unknown_plugin',
+            'core_plugin',
+            '',
+            ['plugin' => $uninstall],
+            'core_plugin_manager::get_plugin_info() returned null for the plugin to be uninstalled'
+        );
     }
 
     $pluginname = $pluginman->plugin_name($pluginfo->component);
     $PAGE->set_title($pluginname);
-    $PAGE->navbar->add(get_string('uninstalling', 'core_plugin', array('name' => $pluginname)));
+    $PAGE->navbar->add(get_string('uninstalling', 'core_plugin', ['name' => $pluginname]));
 
     $reason = $pluginman->can_plugin_be_uninstalled($pluginfo->component);
     if (!empty($reason)) {
@@ -92,11 +95,18 @@ if ($uninstall) {
     }
 
     if (!$confirmed) {
-        $continueurl = new moodle_url($PAGE->url, array('uninstall' => $pluginfo->component, 'sesskey' => sesskey(), 'confirm' => 1, 'return'=>$return));
+        $continueurl = new moodle_url(
+            $PAGE->url,
+            [
+                'uninstall' => $pluginfo->component,
+                'sesskey'   => sesskey(),
+                'confirm'   => 1,
+                'return'    => $return,
+            ]
+        );
         $cancelurl = $pluginfo->get_return_url_after_uninstall($return);
         echo $output->plugin_uninstall_confirm_page($pluginman, $pluginfo, $continueurl, $cancelurl);
         exit();
-
     } else {
         require_sesskey();
         $SESSION->pluginuninstallreturn = $pluginfo->get_return_url_after_uninstall($return);
@@ -105,14 +115,13 @@ if ($uninstall) {
         $progress->finished();
 
         if ($pluginman->is_plugin_folder_removable($pluginfo->component)) {
-            $continueurl = new moodle_url($PAGE->url, array('delete' => $pluginfo->component, 'sesskey' => sesskey(), 'confirm' => 1));
+            $continueurl = new moodle_url($PAGE->url, ['delete' => $pluginfo->component, 'sesskey' => sesskey(), 'confirm' => 1]);
             echo $output->plugin_uninstall_results_removable_page($pluginman, $pluginfo, $progress, $continueurl);
             // Reset op code caches.
             if (function_exists('opcache_reset')) {
                 opcache_reset();
             }
             exit();
-
         } else {
             echo $output->plugin_uninstall_results_page($pluginman, $pluginfo, $progress);
             // Reset op code caches.
@@ -139,26 +148,39 @@ if ($delete and $confirmed) {
 
     // Make sure we know the plugin.
     if (is_null($pluginfo)) {
-        throw new moodle_exception('err_removing_unknown_plugin', 'core_plugin', '', array('plugin' => $delete),
-            'core_plugin_manager::get_plugin_info() returned null for the plugin to be deleted');
+        throw new moodle_exception(
+            'err_removing_unknown_plugin',
+            'core_plugin',
+            '',
+            ['plugin' => $delete],
+            'core_plugin_manager::get_plugin_info() returned null for the plugin to be deleted'
+        );
     }
 
     $pluginname = $pluginman->plugin_name($pluginfo->component);
     $PAGE->set_title($pluginname);
-    $PAGE->navbar->add(get_string('uninstalling', 'core_plugin', array('name' => $pluginname)));
+    $PAGE->navbar->add(get_string('uninstalling', 'core_plugin', ['name' => $pluginname]));
 
     // Make sure it is not installed.
     if (!is_null($pluginfo->versiondb)) {
-        throw new moodle_exception('err_removing_installed_plugin', 'core_plugin', '',
-            array('plugin' => $pluginfo->component, 'versiondb' => $pluginfo->versiondb),
-            'core_plugin_manager::get_plugin_info() returned not-null versiondb for the plugin to be deleted');
+        throw new moodle_exception(
+            'err_removing_installed_plugin',
+            'core_plugin',
+            '',
+            ['plugin' => $pluginfo->component, 'versiondb' => $pluginfo->versiondb],
+            'core_plugin_manager::get_plugin_info() returned not-null versiondb for the plugin to be deleted'
+        );
     }
 
     // Make sure the folder is within Moodle installation tree.
     if (strpos($pluginfo->rootdir, $CFG->dirroot) !== 0) {
-        throw new moodle_exception('err_unexpected_plugin_rootdir', 'core_plugin', '',
-            array('plugin' => $pluginfo->component, 'rootdir' => $pluginfo->rootdir, 'dirroot' => $CFG->dirroot),
-            'plugin root folder not in the moodle dirroot');
+        throw new moodle_exception(
+            'err_unexpected_plugin_rootdir',
+            'core_plugin',
+            '',
+            ['plugin' => $pluginfo->component, 'rootdir' => $pluginfo->rootdir, 'dirroot' => $CFG->dirroot],
+            'plugin root folder not in the moodle dirroot'
+        );
     }
 
     // So long, and thanks for all the bugs.
@@ -170,7 +192,7 @@ if ($delete and $confirmed) {
 
 // Install all avilable updates.
 if ($installupdatex) {
-    require_once($CFG->libdir.'/upgradelib.php');
+    require_once($CFG->libdir . '/upgradelib.php');
     require_sesskey();
 
     $PAGE->set_url($pageurl);
@@ -179,15 +201,17 @@ if ($installupdatex) {
     $PAGE->set_popup_notification_allowed(false);
 
     $installable = $pluginman->filter_installable($pluginman->available_updates());
-    upgrade_install_plugins($installable, $confirminstallupdate,
+    upgrade_install_plugins(
+        $installable,
+        $confirminstallupdate,
         get_string('updateavailableinstallallhead', 'core_admin'),
-        new moodle_url($PAGE->url, array('installupdatex' => 1, 'confirminstallupdate' => 1))
+        new moodle_url($PAGE->url, ['installupdatex' => 1, 'confirminstallupdate' => 1])
     );
 }
 
 // Install single available update.
 if ($installupdate and $installupdateversion) {
-    require_once($CFG->libdir.'/upgradelib.php');
+    require_once($CFG->libdir . '/upgradelib.php');
     require_sesskey();
 
     $PAGE->set_url($pageurl);
@@ -196,12 +220,13 @@ if ($installupdate and $installupdateversion) {
     $PAGE->set_popup_notification_allowed(false);
 
     if ($pluginman->is_remote_plugin_installable($installupdate, $installupdateversion)) {
-        $installable = array($pluginman->get_remote_plugin_info($installupdate, $installupdateversion, true));
-        upgrade_install_plugins($installable, $confirminstallupdate,
+        $installable = [$pluginman->get_remote_plugin_info($installupdate, $installupdateversion, true)];
+        upgrade_install_plugins(
+            $installable,
+            $confirminstallupdate,
             get_string('updateavailableinstallallhead', 'core_admin'),
-            new moodle_url($PAGE->url, array('installupdate' => $installupdate,
-                'installupdateversion' => $installupdateversion, 'confirminstallupdate' => 1)
-            )
+            new moodle_url($PAGE->url, ['installupdate' => $installupdate,
+                'installupdateversion' => $installupdateversion, 'confirminstallupdate' => 1])
         );
     }
 }

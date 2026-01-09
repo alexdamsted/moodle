@@ -389,7 +389,7 @@ class plugin_manager {
         if ($includeindeprecation) {
             return $this->pluginsinfo;
         }
-        return array_filter($this->pluginsinfo, function($key) {
+        return array_filter($this->pluginsinfo, function ($key) {
             return !core_component::is_plugintype_in_deprecation($key);
         }, ARRAY_FILTER_USE_KEY);
     }
@@ -1284,7 +1284,7 @@ class plugin_manager {
      * @since Moodle 5.2
      */
     public function can_plugin_be_uninstalled(string $component): ?string {
-        
+
         $pluginfo = $this->get_plugin_info($component);
 
         if (is_null($pluginfo)) {
@@ -2177,7 +2177,8 @@ class plugin_manager {
         if ($pluginfo->get_status() === static::PLUGIN_STATUS_NEW) {
             // The plugin is not installed. It should be either installed or removed from the disk.
             // Relying on this temporary state may be tricky.
-            return get_string('uninstall_reason_notinstalled', 'core_plugin');;
+            return get_string('uninstall_reason_notinstalled', 'core_plugin');
+            ;
         }
 
         if (method_exists($pluginfo, 'get_uninstall_url') && is_null($pluginfo->get_uninstall_url())) {
