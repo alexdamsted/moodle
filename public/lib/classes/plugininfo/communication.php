@@ -112,10 +112,21 @@ class communication extends base {
     }
 
     public function is_uninstall_allowed(): bool {
+        $warning = $this->get_uninstall_extra_warning();
+        return $warning == '';
+    }
+
+    /**
+     * Uninstall extra warning.
+     *
+     * @return string
+     */   
+    public function get_uninstall_extra_warning() {
         if (in_array($this->name, \core_plugin_manager::standard_plugins_list('communication'))) {
-            return false;
+            return 'This plugin is required by: core';
         }
-        return true;
+
+        return '';
     }
 
     /**

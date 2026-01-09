@@ -135,13 +135,24 @@ class antivirus extends base {
      * Clamav antivirus can not be uninstalled.
      */
     public function is_uninstall_allowed() {
-        if ($this->name === 'clamav') {
-            return false;
-        } else {
-            return true;
-        }
+        $warning = $this->get_uninstall_extra_warning();
+        return $warning == '';
     }
 
+    /**
+     * Uninstall extra warning.
+     *
+     * @return string
+     */
+    public function get_uninstall_extra_warning() {
+        if ($this->name === 'clamav') {
+            return 'This plugin is required by: core';
+        } else {
+            return '';
+        }
+
+        return '';
+    }
     /**
      * Return URL used for management of plugins of this type.
      * @return moodle_url

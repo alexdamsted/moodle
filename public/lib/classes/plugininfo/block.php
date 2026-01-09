@@ -134,10 +134,8 @@ class block extends base {
     }
 
     public function is_uninstall_allowed() {
-        if ($this->name === 'settings' or $this->name === 'navigation') {
-            return false;
-        }
-        return true;
+        $warning = $this->get_uninstall_extra_warning();
+        return $warning == '';
     }
 
     /**
@@ -156,11 +154,15 @@ class block extends base {
     public function get_uninstall_extra_warning() {
         global $DB;
 
-        if (!$count = $DB->count_records('block_instances', array('blockname'=>$this->name))) {
+        if ($this->name === 'settings' or $this->name === 'navigation') {
+            return 'This plugin is required by: core';
+        }
+
+        if (!$count = $DB->count_records('block_instances', ['blockname' => $this->name])) {
             return '';
         }
 
-        return '<p>'.get_string('uninstallextraconfirmblock', 'core_plugin', array('instances'=>$count)).'</p>';
+        return '<p>' . get_string('uninstallextraconfirmblock', 'core_plugin', ['instances' => $count]) . '</p>';
     }
 
     /**

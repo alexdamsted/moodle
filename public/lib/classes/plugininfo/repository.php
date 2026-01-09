@@ -163,11 +163,21 @@ class repository extends base {
      * @return boolean
      */
     public function is_uninstall_allowed() {
+        $warning = $this->get_uninstall_extra_warning();
+        return $warning == '';
+    }
+
+    /**
+     * Uninstall extra warning.
+     *
+     * @return string
+     */
+    public function get_uninstall_extra_warning() {
         if ($this->name === 'upload' || $this->name === 'coursefiles' || $this->name === 'user' || $this->name === 'recent') {
-            return false;
-        } else {
-            return true;
+            return 'This plugin is required by: core';
         }
+
+        return '';
     }
 
     /**

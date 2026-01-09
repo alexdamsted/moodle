@@ -32,19 +32,29 @@ defined('MOODLE_INTERNAL') || die();
  */
 class theme extends base {
     public function is_uninstall_allowed() {
+        $warning = $this->get_uninstall_extra_warning();
+        return $warning == '';
+    }
+
+    /**
+     * Uninstall extra warning.
+     *
+     * @return string
+     */
+    public function get_uninstall_extra_warning() {
         global $CFG;
 
         if ($this->name === 'boost') {
             // All of these are protected for now.
-            return false;
+            return 'This plugin is required by: core';
         }
 
         if (!empty($CFG->theme) and $CFG->theme === $this->name) {
             // Cannot uninstall default theme.
-            return false;
+            return 'This plugin is required by: core';
         }
 
-        return true;
+        return '';
     }
 
     /**

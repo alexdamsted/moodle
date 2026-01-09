@@ -40,11 +40,24 @@ class qbank extends base {
     }
 
     public function is_uninstall_allowed(): bool {
-        if (in_array($this->name, \core_plugin_manager::standard_plugins_list('qbank'))) {
-            return false;
-        }
-        return true;
+        $warning = $this->get_uninstall_extra_warning();
+        return $warning == '';
     }
+
+    /**
+     * Uninstall extra warning.
+     *
+     * @return string
+     */
+    public function get_uninstall_extra_warning() {
+        global $DB;
+
+        if (in_array($this->name, \core_plugin_manager::standard_plugins_list('qbank'))) {
+            return 'This plugin is required by: core';
+        }
+
+        return '';
+    } 
 
     public static function get_manage_url(): \moodle_url {
         return new \moodle_url('/admin/settings.php', ['section' => 'manageqbanks']);

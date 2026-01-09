@@ -40,8 +40,20 @@ class mlbackend extends base {
      * @return bool
      */
     public function is_uninstall_allowed() {
+        $warning = $this->get_uninstall_extra_warning();
+        return $warning == '';
+    }
 
-        return !\core_analytics\manager::is_mlbackend_used('mlbackend_' . $this->name);
+    /**
+     * Uninstall extra warning.
+     *
+     * @return string
+     */
+    public function get_uninstall_extra_warning() {
+        if (!\core_analytics\manager::is_mlbackend_used('mlbackend_' . $this->name)) {
+            return 'This plugin is required by: core';
+        }
+        return '';
     }
 
     /**

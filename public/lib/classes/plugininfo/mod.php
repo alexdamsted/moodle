@@ -166,7 +166,8 @@ class mod extends base {
      * Activity modules that declare feature flag FEATURE_CAN_UNINSTALL as false cannot be uninstalled.
      */
     public function is_uninstall_allowed() {
-        return plugin_supports('mod', $this->name, FEATURE_CAN_UNINSTALL, true);
+        $warning = $this->get_uninstall_extra_warning();
+        return $warning == '';
     }
 
     /**
@@ -184,6 +185,12 @@ class mod extends base {
      */
     public function get_uninstall_extra_warning() {
         global $DB;
+        
+        $result = plugin_supports('mod', $this->name, FEATURE_CAN_UNINSTALL, true);
+
+        if ($result == false) {
+            return "FEATURE_CAN_UNINSTALL set to false by: mod_$this->name. This plugin cannot be uninstalled.";
+        }
 
         if (!$module = $DB->get_record('modules', array('name'=>$this->name))) {
             return '';

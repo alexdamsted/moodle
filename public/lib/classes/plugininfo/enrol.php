@@ -118,10 +118,8 @@ class enrol extends base {
     }
 
     public function is_uninstall_allowed() {
-        if ($this->name === 'manual') {
-            return false;
-        }
-        return true;
+        $warning = $this->get_uninstall_extra_warning();
+        return $warning == '';
     }
 
     /**
@@ -139,6 +137,10 @@ class enrol extends base {
      */
     public function get_uninstall_extra_warning() {
         global $DB, $OUTPUT;
+
+        if ($this->name === 'manual') {
+            return 'This plugin is required by: core';
+        }
 
         $sql = "SELECT COUNT('x')
                   FROM {user_enrolments} ue

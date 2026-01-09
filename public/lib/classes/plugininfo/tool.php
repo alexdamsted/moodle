@@ -33,12 +33,22 @@ defined('MOODLE_INTERNAL') || die();
 class tool extends base {
 
     public function is_uninstall_allowed() {
+        $warning = $this->get_uninstall_extra_warning();
+        return $warning == '';
+    }
+
+    /**
+     * Uninstall extra warning.
+     *
+     * @return string
+     */
+    public function get_uninstall_extra_warning() {
         // Some mobile settings are used by the core.
         if ($this->name === 'mobile') {
-            return false;
-        } else {
-            return true;
+            return 'This plugin is required by: core';
         }
+
+        return '';
     }
 
     /**

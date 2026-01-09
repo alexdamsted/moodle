@@ -37,13 +37,27 @@ class auth extends base {
     }
 
     public function is_uninstall_allowed() {
+        $warning = $this->get_uninstall_extra_warning();
+        return $warning == '';
+    }
+
+    /**
+     * Uninstall extra warning.
+     *
+     * @return string
+     */
+    public function get_uninstall_extra_warning() {
         global $DB;
 
-        if (in_array($this->name, array('manual', 'nologin', 'webservice', 'mnet'))) {
-            return false;
+        if (in_array($this->name, ['manual', 'nologin', 'webservice', 'mnet'])) {
+            return 'This plugin is required by: core';
         }
 
-        return !$DB->record_exists('user', array('auth'=>$this->name));
+        if ($DB->record_exists('user', ['auth' => $this->name])) {
+            return 'This auth method is used by at least one user';
+        }
+
+        return '';
     }
 
     /**

@@ -31,6 +31,16 @@ defined('MOODLE_INTERNAL') || die();
 class cachelock extends base {
 
     public function is_uninstall_allowed() {
-        return false;
+        $warning = $this->get_uninstall_extra_warning();
+        return $warning == '';
+    }
+
+    /**
+     * Uninstall extra warning.
+     *
+     * @return string
+     */
+    public function get_uninstall_extra_warning() {
+        return 'This plugin is required by: core';
     }
 }

@@ -143,11 +143,8 @@ class format extends base {
     }
 
     public function is_uninstall_allowed() {
-        if ($this->name !== get_config('moodlecourse', 'format') && $this->name !== 'site') {
-            return true;
-        } else {
-            return false;
-        }
+        $warning = $this->get_uninstall_extra_warning();
+        return $warning == '';
     }
 
     /**
@@ -158,8 +155,17 @@ class format extends base {
         return new moodle_url('/admin/settings.php', array('section'=>'manageformats'));
     }
 
+    /**
+     * Uninstall extra warning.
+     *
+     * @return string
+     */
     public function get_uninstall_extra_warning() {
         global $DB;
+
+        if ($this->name === get_config('moodlecourse', 'format') && $this->name === 'site') {
+            return 'This plugin is required by: core';
+        }
 
         $coursecount = $DB->count_records('course', array('format' => $this->name));
 

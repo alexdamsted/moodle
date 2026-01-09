@@ -89,14 +89,27 @@ class qbehaviour extends base {
     }
 
     public function is_uninstall_allowed() {
+        $warning = $this->get_uninstall_extra_warning();
+        return $warning == '';
+    }
+
+    /**
+     * Uninstall extra warning.
+     *
+     * @return string
+     */ 
+    public function get_uninstall_extra_warning() {
         global $DB;
 
         if ($this->name === 'missing') {
-            // qbehaviour_missing is used by the system. It cannot be uninstalled.
-            return false;
+            return 'This plugin is required by: core';
         }
 
-        return !$DB->record_exists('question_attempts', array('behaviour' => $this->name));
+        if (!$DB->record_exists('question_attempts', ['behaviour' => $this->name])) {
+            return 'This plugin is required by: core';
+        }
+
+        return '';
     }
 
     /**
