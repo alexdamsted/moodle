@@ -1,0 +1,9 @@
+issueNumber: MDL-79763
+notes:
+  mod_assign:
+    - message: >-
+        $CFG->conversionattemptlimit is reintroduced to set an attempt limit on 
+        conversions. The convert_submission task can fail,
+        $CFG->conversionattemptlimit gives us freedom around setting a retry
+        limit.
+      type: improved

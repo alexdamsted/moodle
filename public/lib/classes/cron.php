@@ -527,8 +527,12 @@ class cron {
                 mtrace("... used " . (microtime(1) - $pretime) . " seconds");
             }
             mtrace('... used ' . display_size(memory_get_peak_usage()) . ' peak memory');
-            mtrace("Adhoc task complete: " . get_class($task));
-            \core\task\manager::adhoc_task_complete($task);
+            if ($delay = $task->get_soft_retry_delay()) {
+                \core\task\manager::adhoc_task_delayed($task, $delay);
+            } else {
+                mtrace("Adhoc task complete: " . get_class($task));
+                \core\task\manager::adhoc_task_complete($task);
+            }
         } catch (\Throwable $e) {
             if ($DB && $DB->is_transaction_started()) {
                 error_log('Database transaction aborted automatically in ' . get_class($task));

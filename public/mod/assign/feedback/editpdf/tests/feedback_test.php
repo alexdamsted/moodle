@@ -389,7 +389,78 @@ final class feedback_test extends \advanced_testcase {
         $this->assertStringContainsString('Converting submission for user id ' . $student->id, $output);
         $this->assertStringContainsString('The document has been successfully converted', $output);
         $this->assertNull(\core\task\manager::get_next_adhoc_task(time()));
+
+        $data = [
+            'submissionid' => $submission->id,
+            'submissionattempt' => $submission->attemptnumber,
+        ];
+
+        // Create a fresh adhoc task.
+        $task = new \assignfeedback_editpdf\task\convert_submission();
+        $task->set_custom_data($data);
+
+        // Force attempts to 0 BEFORE queueing.
+        $task->set_attempts_available(0);
+
+        // Try to queue this new task.
+        \core\task\manager::queue_adhoc_task($task, true);
+
+        // Confirm, we cannot fetch a task with 0 attempts.
+        $queued = \core\task\manager::get_next_adhoc_task(time());
+        $this->assertNull($queued, 'A task with 0 attempts must not be queued.');
     }
+
+    /**
+     * Test that soft retry delay works for convert_submission adhoc task.
+     *
+     * @covers \assignfeedback_editpdf\task\convert_submission
+     */
+    public function test_soft_retry_delay(): void {
+        $this->resetAfterTest();
+        \core\cron::setup_user();
+
+        $course = $this->getDataGenerator()->create_course();
+        $student = $this->getDataGenerator()->create_and_enrol($course, 'student');
+
+        $assignopts = [
+            'assignsubmission_file_enabled' => 1,
+            'assignsubmission_file_maxfiles' => 1,
+            'assignfeedback_editpdf_enabled' => 1,
+            'assignsubmission_file_maxsizebytes' => 1000000,
+        ];
+        $assign = $this->create_instance($course, $assignopts);
+
+        $this->add_file_submission($student, $assign);
+        $submission = $assign->get_user_submission($student->id, true);
+
+        $data = [
+            'submissionid' => $submission->id,
+            'submissionattempt' => $submission->attemptnumber,
+        ];
+
+        // Create a new adhoc task.
+        $task = new \assignfeedback_editpdf\task\convert_submission();
+        $task->set_custom_data($data);
+
+        // Initially, soft retry delay is null.
+        $this->assertNull($task->get_soft_retry_delay());
+
+        // Simulate setting soft retry delay (like during requeue).
+        $task->set_soft_retry_delay(60);
+
+        // Persist the delay in customdata as well.
+        $customdata = (array) $task->get_custom_data();
+        $customdata['softretrydelay'] = 60;
+        $task->set_custom_data($customdata);
+
+        // Check that the getter works.
+        $this->assertEquals(60, $task->get_soft_retry_delay());
+
+        // Check that customdata contains the softretrydelay key.
+        $storeddata = (array) $task->get_custom_data();
+        $this->assertArrayHasKey('softretrydelay', $storeddata);
+        $this->assertEquals(60, $storeddata['softretrydelay']);
+    }    
 
     /**
      * Test that modifying the annotated pdf form return true when modified

@@ -1127,6 +1127,58 @@ class manager {
     }
 
     /**
+     * Delay an adhoc task by setting a new next runtime.
+     *
+     * @param \core\task\adhoc_task $task
+     * @param int $delay Delay in seconds
+     */
+    public static function adhoc_task_delayed(\core\task\adhoc_task $task, int $delay): void {
+        global $DB;
+
+        $now = time();
+
+        // Read existing custom data.
+        $customdata = (array) $task->get_custom_data();
+        
+        if (isset($customdata['softretrydelay'])) {
+            // Exponential delay.
+            $delay *= 2;
+        }
+    
+        // Max 24 hour delay.
+        if ($delay >= 86400) {
+            $delay = 86400;
+        }
+
+        // Persist delay into task object and custom data.
+        $customdata['softretrydelay'] = $delay;
+        $task->set_custom_data($customdata);
+
+        // Schedule next run.
+        $task->set_next_run_time($now + $delay);
+
+        // Reset execution.
+        $task->set_timestarted();
+        $task->set_hostname();
+        $task->set_pid();
+        
+        // Just to make sure the task attempt is set.
+        if ($task->get_attempts_available() > 0) {
+            $task->set_attempts_available($task->get_attempts_available());
+        }
+
+        // Persist to DB.
+        $record = self::record_from_adhoc_task($task);
+        $DB->update_record('task_adhoc', $record);
+
+        mtrace(
+            "Adhoc task delayed: " . get_class($task) .
+            " until " . userdate($now + $delay) .
+            " (delay {$delay}s)"
+        );
+    }    
+
+    /**
      * This function indicates that an adhoc task was not completed successfully and should be retried.
      *
      * @param \core\task\adhoc_task $task

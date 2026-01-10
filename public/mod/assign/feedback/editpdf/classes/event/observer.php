@@ -51,6 +51,7 @@ class observer {
      * @param \mod_assign\event\base $event The submission created/updated event.
      */
     protected static function queue_conversion($event) {
+        global $CFG;
         $assign = $event->get_assign();
         $plugin = $assign->get_feedback_plugin_by_type('editpdf');
 
@@ -65,6 +66,10 @@ class observer {
         ];
         $task = new \assignfeedback_editpdf\task\convert_submission;
         $task->set_custom_data($data);
+
+        // Set to either $CFG->conversionattemptlimit or 6.
+        // We use 6 to give the task a reasonable chance to run.
+        $task->set_attempts_available($CFG->conversionattemptlimit ?? 6);
         \core\task\manager::queue_adhoc_task($task, true);
     }
 }

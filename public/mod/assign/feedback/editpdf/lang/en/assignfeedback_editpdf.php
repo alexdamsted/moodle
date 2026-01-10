@@ -43,6 +43,7 @@ $string['default'] = 'Enabled by default';
 $string['default_help'] = 'If set, this feedback method will be enabled by default for all new assignments.';
 $string['deleteannotation'] = 'Delete annotation';
 $string['deletecomment'] = 'Delete comment';
+$string['documentcombinationinprogress'] = 'Conversion still in progress';
 $string['deletefeedback'] = 'Delete feedback PDF';
 $string['downloadablefilename'] = 'feedback.pdf';
 $string['downloadfeedback'] = 'Download feedback PDF';

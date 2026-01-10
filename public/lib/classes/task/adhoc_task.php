@@ -49,6 +49,9 @@ abstract class adhoc_task extends task_base {
     /** @var int $attemptsavailable - The remaining attempts of the task. */
     private $attemptsavailable = 12;
 
+    /** @var int $softretrydelay - A soft retry delay for adhoc tasks */
+    private $softretrydelay = null;
+    
     /**
      * Provide default implementation of the task name for backward compatibility. Extending classes are expected to implement
      * this method to provide a descriptive name for the task (shown to admins)
@@ -125,6 +128,24 @@ abstract class adhoc_task extends task_base {
      */
     public function set_userid($userid) {
         $this->userid = $userid;
+    }
+
+    /**
+     * Setter for $softretrydelay
+     *
+     * @param int|null $softretrydelay
+     */
+    public function set_soft_retry_delay(?int $softretrydelay = null) {
+        $this->softretrydelay = $softretrydelay;
+    }
+
+    /**
+     * Getter for $softretrydelay
+     *
+     * @return int $softretrydelay
+     */
+    public function get_soft_retry_delay() {
+        return $this->softretrydelay;
     }
 
     /**
