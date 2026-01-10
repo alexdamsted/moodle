@@ -29,7 +29,6 @@ namespace assignfeedback_editpdf\event;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class observer {
-
     /**
      * Listen to events and queue the submission for processing.
      * @param \mod_assign\event\submission_created $event
@@ -64,7 +63,7 @@ class observer {
             'submissionid' => $event->other['submissionid'],
             'submissionattempt' => $event->other['submissionattempt'],
         ];
-        $task = new \assignfeedback_editpdf\task\convert_submission;
+        $task = new \assignfeedback_editpdf\task\convert_submission();
         $task->set_custom_data($data);
 
         // Set to either $CFG->conversionattemptlimit or 6.

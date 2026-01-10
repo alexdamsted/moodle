@@ -32,7 +32,6 @@ require_once($CFG->dirroot . '/mod/assign/tests/generator.php');
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 final class feedback_test extends \advanced_testcase {
-
     // Use the generator helper.
     use mod_assign_test_generator;
 
@@ -63,14 +62,14 @@ final class feedback_test extends \advanced_testcase {
         $submission = $assign->get_user_submission($student->id, true);
 
         $fs = get_file_storage();
-        $filerecord = (object) array(
+        $filerecord = (object) [
             'contextid' => $assign->get_context()->id,
             'component' => 'assignsubmission_file',
             'filearea' => ASSIGNSUBMISSION_FILE_FILEAREA,
             'itemid' => $submission->id,
             'filepath' => '/',
-            'filename' => $textfile ? 'submission.txt' : 'submission.pdf'
-        );
+            'filename' => $textfile ? 'submission.txt' : 'submission.pdf',
+        ];
         $sourcefile = $CFG->dirroot . '/mod/assign/feedback/editpdf/tests/fixtures/submission.' . ($textfile ? 'txt' : 'pdf');
         $fs->create_file_from_pathname($filerecord, $sourcefile);
 
@@ -140,7 +139,7 @@ final class feedback_test extends \advanced_testcase {
         $comment2->y = 100;
         $comment2->colour = 'clear';
 
-        page_editor::set_comments($grade->id, 0, array($comment, $comment2));
+        page_editor::set_comments($grade->id, 0, [$comment, $comment2]);
 
         $annotation = new annotation();
         $annotation->path = '';
@@ -160,7 +159,7 @@ final class feedback_test extends \advanced_testcase {
         $annotation2->type = 'rectangle';
         $annotation2->colour = 'yellow';
 
-        page_editor::set_annotations($grade->id, 0, array($annotation, $annotation2));
+        page_editor::set_annotations($grade->id, 0, [$annotation, $annotation2]);
 
         // Still empty because all edits are still drafts.
         $this->assertFalse(page_editor::has_annotations_or_comments($grade->id, false));
@@ -262,9 +261,9 @@ final class feedback_test extends \advanced_testcase {
         $comment->y = 100;
         $comment->colour = 'red';
 
-        page_editor::set_comments($grade->id, 0, array($comment));
+        page_editor::set_comments($grade->id, 0, [$comment]);
 
-        $annotations = array();
+        $annotations = [];
 
         $annotation = new annotation();
         $annotation->path = '';
@@ -374,7 +373,7 @@ final class feedback_test extends \advanced_testcase {
         // Trigger a re-queue by 'updating' a submission.
         $submission = $assign->get_user_submission($student->id, true);
         $plugin = $assign->get_submission_plugin_by_type('file');
-        $plugin->save($submission, (new \stdClass));
+        $plugin->save($submission, (new \stdClass()));
 
         $task = \core\task\manager::get_next_adhoc_task(time());
         // Verify that queued a conversion task.
@@ -460,7 +459,7 @@ final class feedback_test extends \advanced_testcase {
         $storeddata = (array) $task->get_custom_data();
         $this->assertArrayHasKey('softretrydelay', $storeddata);
         $this->assertEquals(60, $storeddata['softretrydelay']);
-    }    
+    }
 
     /**
      * Test that modifying the annotated pdf form return true when modified
@@ -497,9 +496,9 @@ final class feedback_test extends \advanced_testcase {
         $comment->y = 100;
         $comment->colour = 'red';
 
-        page_editor::set_comments($grade->id, 0, array($comment));
+        page_editor::set_comments($grade->id, 0, [$comment]);
 
-        $annotations = array();
+        $annotations = [];
 
         $annotation = new annotation();
         $annotation->path = '';
@@ -627,7 +626,7 @@ final class feedback_test extends \advanced_testcase {
 
         $conversion = new \core_files\conversion(0, (object)[
             'sourcefileid' => $sourcefile->get_id(),
-            'targetformat' => 'pdf'
+            'targetformat' => 'pdf',
         ]);
         $conversion->create();
 
@@ -640,7 +639,7 @@ final class feedback_test extends \advanced_testcase {
             'filearea'  => 'unittest',
             'itemid'    => $submission->id,
             'filepath'  => '/',
-            'filename'  => 'submission.txt'
+            'filename'  => 'submission.txt',
         ];
 
         $fs = get_file_storage();

@@ -33,14 +33,13 @@ namespace core\task;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 abstract class adhoc_task extends task_base {
-
     /** @var string $customdata - Custom data required for when this task is executed. */
     private $customdata = '';
 
-    /** @var integer|null $id - Adhoc tasks each have their own database record id. */
+    /** @var int|null $id - Adhoc tasks each have their own database record id. */
     private $id = null;
 
-    /** @var integer|null $userid - Adhoc tasks may choose to run as a specific user. */
+    /** @var int|null $userid - Adhoc tasks may choose to run as a specific user. */
     private $userid = null;
 
     /** @var \core\lock\lock The concurrency task lock for this task. */
@@ -51,7 +50,7 @@ abstract class adhoc_task extends task_base {
 
     /** @var int $softretrydelay - A soft retry delay for adhoc tasks */
     private $softretrydelay = null;
-    
+
     /**
      * Provide default implementation of the task name for backward compatibility. Extending classes are expected to implement
      * this method to provide a descriptive name for the task (shown to admins)
