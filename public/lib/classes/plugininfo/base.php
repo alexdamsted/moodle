@@ -32,7 +32,6 @@ use moodle_url;
  * Base class providing access to the information about a plugin
  */
 abstract class base {
-
     /** @var string the plugintype name, eg. mod, auth or workshopform */
     public $type;
     /** @var string full path to the location of all the plugins of this type */
@@ -152,10 +151,16 @@ abstract class base {
 
         // Also included deleted plugins.
 
-        $return = array();
+        $return = [];
         foreach ($plugins as $pluginname => $pluginrootdir) {
-            $return[$pluginname] = self::make_plugin_instance($type, $typerootdir,
-                $pluginname, $pluginrootdir, $typeclass, $pluginman);
+            $return[$pluginname] = self::make_plugin_instance(
+                $type,
+                $typerootdir,
+                $pluginname,
+                $pluginrootdir,
+                $typeclass,
+                $pluginman
+            );
         }
 
         // Fetch missing incorrectly uninstalled plugins, including deprecated plugins which are not included above.
@@ -169,7 +174,7 @@ abstract class base {
             $plugin->type        = $type;
             $plugin->typerootdir = $typerootdir;
             $plugin->name        = $name;
-            $plugin->component   = $plugin->type.'_'.$plugin->name;
+            $plugin->component   = $plugin->type . '_' . $plugin->name;
             $plugin->rootdir     = null;
             $plugin->displayname = $name;
             $plugin->versiondb   = $version;
@@ -201,7 +206,7 @@ abstract class base {
         $plugin->name        = $name;
         $plugin->rootdir     = $namerootdir;
         $plugin->pluginman   = $pluginman;
-        $plugin->component   = $plugin->type.'_'.$plugin->name;
+        $plugin->component   = $plugin->type . '_' . $plugin->name;
 
         $plugin->init_display_name();
         $plugin->load_disk_version();
@@ -247,10 +252,11 @@ abstract class base {
      */
     public function __get($name) {
         switch ($name) {
-            case 'component': return $this->type . '_' . $this->name;
+            case 'component':
+                return $this->type . '_' . $this->name;
 
             default:
-                debugging('Invalid plugin property accessed! '.$name);
+                debugging('Invalid plugin property accessed! ' . $name);
                 return null;
         }
     }
@@ -286,7 +292,7 @@ abstract class base {
         $this->versionrequires = null;
         $this->pluginsupported = null;
         $this->pluginincompatible = null;
-        $this->dependencies = array();
+        $this->dependencies = [];
 
         if (!isset($versions[$this->name])) {
             return;
@@ -316,19 +322,20 @@ abstract class base {
             if (is_array($plugin->supported) && $isint && $isrange) {
                 $this->pluginsupported = $plugin->supported;
             } else {
-                throw new coding_exception('Incorrect syntax in plugin supported declaration in '."$this->name");
+                throw new coding_exception('Incorrect syntax in plugin supported declaration in ' . "$this->name");
             }
         }
 
         if (isset($plugin->incompatible) && $plugin->incompatible !== null) {
-            if (((is_string($plugin->incompatible) && ctype_digit($plugin->incompatible)) || is_int($plugin->incompatible))
-                    && (int) $plugin->incompatible > 0) {
+            if (
+                ((is_string($plugin->incompatible) && ctype_digit($plugin->incompatible)) || is_int($plugin->incompatible))
+                    && (int) $plugin->incompatible > 0
+            ) {
                 $this->pluginincompatible = intval($plugin->incompatible);
             } else {
-                throw new coding_exception('Incorrect syntax in plugin incompatible declaration in '."$this->name");
+                throw new coding_exception('Incorrect syntax in plugin incompatible declaration in ' . "$this->name");
             }
         }
-
     }
 
     /**
@@ -397,8 +404,10 @@ abstract class base {
             $standard = array_flip($standard);
             if (isset($standard[$this->name])) {
                 $this->source = core_plugin_manager::PLUGIN_SOURCE_STANDARD;
-            } else if (!is_null($this->versiondb) and is_null($this->versiondisk)
-                and $pluginman::is_deleted_standard_plugin($this->type, $this->name)) {
+            } else if (
+                !is_null($this->versiondb) && is_null($this->versiondisk)
+                && $pluginman::is_deleted_standard_plugin($this->type, $this->name)
+            ) {
                 $this->source = core_plugin_manager::PLUGIN_SOURCE_STANDARD; // To be deleted.
             } else {
                 $this->source = core_plugin_manager::PLUGIN_SOURCE_EXTENSION;
@@ -441,7 +450,6 @@ abstract class base {
 
         if (empty($this->versionrequires)) {
             return true;
-
         } else {
             return (float)$this->versionrequires <= (float)$moodleversion;
         }
@@ -472,28 +480,22 @@ abstract class base {
 
         if (is_null($this->versiondb) and is_null($this->versiondisk)) {
             return core_plugin_manager::PLUGIN_STATUS_NODB;
-
         } else if (is_null($this->versiondb) and !is_null($this->versiondisk)) {
             return core_plugin_manager::PLUGIN_STATUS_NEW;
-
         } else if (!is_null($this->versiondb) and is_null($this->versiondisk)) {
             if ($pluginman::is_deleted_standard_plugin($this->type, $this->name)) {
                 return core_plugin_manager::PLUGIN_STATUS_DELETE;
             } else {
                 return core_plugin_manager::PLUGIN_STATUS_MISSING;
             }
-
         } else if ((float)$this->versiondb === (float)$this->versiondisk) {
             // Note: the float comparison should work fine here
-            //       because there are no arithmetic operations with the numbers.
+            // because there are no arithmetic operations with the numbers.
             return core_plugin_manager::PLUGIN_STATUS_UPTODATE;
-
         } else if ($this->versiondb < $this->versiondisk) {
             return core_plugin_manager::PLUGIN_STATUS_UPGRADE;
-
         } else if ($this->versiondb > $this->versiondisk) {
             return core_plugin_manager::PLUGIN_STATUS_DOWNGRADE;
-
         } else {
             // $version = pi(); and similar funny jokes - hopefully Donald E. Knuth will never contribute to Moodle ;-)
             throw new coding_exception('Unable to determine plugin state, check the plugin versions');
@@ -563,11 +565,11 @@ abstract class base {
         }
 
         if (empty($this->availableupdates) or !is_array($this->availableupdates)) {
-            $this->availableupdates = array();
+            $this->availableupdates = [];
             return null;
         }
 
-        $updates = array();
+        $updates = [];
 
         foreach ($this->availableupdates as $availableupdate) {
             if ($availableupdate->version > $this->versiondisk) {
@@ -647,6 +649,15 @@ abstract class base {
     }
 
     /**
+     * Cannot uninstall, provide the reason why.
+     *
+     * @return string
+     */
+    public function get_uninstall_notallowed_reason() {
+        return '';
+    }
+
+    /**
      * Pre-uninstall hook.
      *
      * This is intended for disabling of plugin, some DB table purging, etc.
@@ -699,7 +710,7 @@ abstract class base {
                 return $url;
             }
         }
-        return new moodle_url('/admin/plugins.php#plugin_type_cell_'.$this->type);
+        return new moodle_url('/admin/plugins.php#plugin_type_cell_' . $this->type);
     }
 
     /**
@@ -719,11 +730,11 @@ abstract class base {
      * @return moodle_url
      */
     final public function get_default_uninstall_url($return = 'overview') {
-        return new moodle_url('/admin/plugins.php', array(
+        return new moodle_url('/admin/plugins.php', [
             'uninstall' => $this->component,
             'confirm' => 0,
             'return' => $return,
-        ));
+        ]);
     }
 
     /**
