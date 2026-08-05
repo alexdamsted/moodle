@@ -231,7 +231,21 @@ function file_postupdate_standard_editor($data, $field, array $options, $context
     $editor = $data->{$field.'_editor'};
 
     if ($options['maxfiles'] == 0 or is_null($filearea) or is_null($itemid) or empty($editor['itemid'])) {
-        $data->{$field} = $editor['text'];
+        $text = $editor['text'];
+        if (!is_null($context) && !is_null($text)) {
+            $hook = new \core_files\hook\before_editor_content_saved(
+                text: $text,
+                contextid: $context->id,
+                component: $component,
+                filearea: $filearea,
+                itemid: $itemid,
+                draftitemid: null,
+                format: (int) $editor['format'],
+            );
+            \core\di::get(\core\hook\manager::class)->dispatch($hook);
+            $text = $hook->get_text();
+        }
+        $data->{$field} = $text;
     } else {
         // Clean the user drafts area of any files not referenced in the editor text.
         if ($options['removeorphaneddrafts']) {
@@ -1052,7 +1066,10 @@ function file_copy_file_to_file_area($file, $filename, $itemid) {
  * @global stdClass $USER
  * @param int $draftitemid the id of the draft area to use. Normally obtained
  *      from file_get_submitted_draft_itemid('elementname') or similar.
- *      When set to -1 (probably, by a WebService) it won't process file merging, keeping the original state of the file area.
+ *      When set to IGNORE_FILE_MERGE (-1, typically from a WebService) it won't process file merging,
+ *      keeping the original state of the file area. Note that the
+ *      {@see \core_files\hook\before_editor_content_saved} hook is still dispatched in this case
+ *      (when $text is not null), and $draftitemid will be IGNORE_FILE_MERGE in the hook.
  * @param int $contextid This parameter and the next two identify the file area to save to.
  * @param string $component
  * @param string $filearea indentifies the file area.
@@ -1068,7 +1085,20 @@ function file_save_draft_area_files($draftitemid, $contextid, $component, $filea
 
     // Do not merge files, leave it as it was.
     if ($draftitemid === IGNORE_FILE_MERGE) {
-        // Safely return $text, no need to rewrite pluginfile because this is mostly comming from an external client like the app.
+        // Safely return $text, no need to rewrite pluginfile because this is mostly coming from an external client like the app.
+        // The hook is still dispatched so subscribers can transform or inspect the content regardless of file handling.
+        if (!is_null($text)) {
+            $hook = new \core_files\hook\before_editor_content_saved(
+                text: $text,
+                contextid: $contextid,
+                component: $component,
+                filearea: $filearea,
+                itemid: $itemid,
+                draftitemid: $draftitemid,
+            );
+            \core\di::get(\core\hook\manager::class)->dispatch($hook);
+            $text = $hook->get_text();
+        }
         return $text;
     }
 
@@ -1274,9 +1304,21 @@ function file_save_draft_area_files($draftitemid, $contextid, $component, $filea
 
     if (is_null($text)) {
         return null;
-    } else {
-        return file_rewrite_urls_to_pluginfile($text, $draftitemid, $forcehttps);
     }
+
+    $text = file_rewrite_urls_to_pluginfile($text, $draftitemid, $forcehttps);
+
+    $hook = new \core_files\hook\before_editor_content_saved(
+        text: $text,
+        contextid: $contextid,
+        component: $component,
+        filearea: $filearea,
+        itemid: $itemid,
+        draftitemid: $draftitemid,
+    );
+    \core\di::get(\core\hook\manager::class)->dispatch($hook);
+
+    return $hook->get_text();
 }
 
 /**
