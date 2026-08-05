@@ -1,0 +1,24 @@
+issueNumber: MDL-73596
+notes:
+  core_files:
+    - message: >-
+        A new hook `\core_files\hook\before_editor_content_saved` is dispatched
+        just before editor content is persisted to the database. It fires after
+        standard draft-file URL rewriting (draft URLs converted to
+        `@@PLUGINFILE@@` tokens), giving subscribers a chance to perform
+        additional content transformations before the final value is stored.
+        Subscribers may call `set_text()` to replace the content.
+
+
+        The hook is dispatched from two locations:
+
+        - `file_save_draft_area_files()`: when `$text` is not null. `$draftitemid`
+          is set and `$format` is `null`. When the function is called with
+          `IGNORE_FILE_MERGE` (-1), the hook is still dispatched and `$draftitemid`
+          will be `IGNORE_FILE_MERGE`; no file merging or URL rewriting will have
+          occurred in that case.
+
+        - `file_postupdate_standard_editor()`: when no file area is used
+          (`maxfiles == 0`) and both `$context` and the editor text are not null.
+          `$format` is set and `$draftitemid` is `null`.
+      type: improved
