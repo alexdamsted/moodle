@@ -122,10 +122,19 @@ class communication extends base {
 
     #[\Override]
     public function is_uninstall_allowed(): bool {
+        return $this->get_uninstall_notallowed_reason() === '';
+    }
+
+    /**
+     * Cannot uninstall, provide the reason why.
+     *
+     * @return string
+     */
+    public function get_uninstall_notallowed_reason() {
         if (in_array($this->name, \core_plugin_manager::standard_plugins_list('communication'))) {
-            return false;
+            return get_string('uninstall_reason_notallowed_required', 'core_plugin', $this->name);
         }
-        return true;
+        return '';
     }
 
     /**

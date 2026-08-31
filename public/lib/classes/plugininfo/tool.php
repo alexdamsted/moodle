@@ -31,14 +31,21 @@ defined('MOODLE_INTERNAL') || die();
  * Class for admin tool plugins
  */
 class tool extends base {
-
     public function is_uninstall_allowed() {
+        return $this->get_uninstall_notallowed_reason() === '';
+    }
+
+    /**
+     * Cannot uninstall, provide the reason why.
+     *
+     * @return string
+     */
+    public function get_uninstall_notallowed_reason() {
         // Some mobile settings are used by the core.
         if ($this->name === 'mobile') {
-            return false;
-        } else {
-            return true;
+            return get_string('uninstall_reason_notallowed_required', 'core_plugin', $this->component);
         }
+        return '';
     }
 
     /**

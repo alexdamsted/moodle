@@ -25,7 +25,6 @@ namespace core\plugininfo;
  */
 class mod extends base {
     #[\Override]
-
     public static function plugintype_supports_disabling(): bool {
         return true;
     }
@@ -176,7 +175,8 @@ class mod extends base {
 
     #[\Override]
     public function is_uninstall_allowed() {
-        return plugin_supports('mod', $this->name, FEATURE_CAN_UNINSTALL, true);
+        $reason = $this->get_uninstall_notallowed_reason();
+        return $reason == '';
     }
 
     #[\Override]
@@ -214,6 +214,21 @@ class mod extends base {
             'instances' => $count,
             'courses' => $courses,
         ]) . '</p>';
+    }
+
+    /**
+     * Cannot uninstall, provide the reason why.
+     *
+     * @return string
+     */
+    public function get_uninstall_notallowed_reason() {
+        $result = plugin_supports('mod', $this->name, FEATURE_CAN_UNINSTALL, true);
+
+        if ($result == false) {
+            return get_string('uninstall_reason_notallowed_required', 'core_plugin', $this->component);
+        }
+
+        return '';
     }
 
     #[\Override]

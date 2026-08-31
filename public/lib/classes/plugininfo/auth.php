@@ -31,13 +31,25 @@ class auth extends base {
 
     #[\Override]
     public function is_uninstall_allowed() {
+        return $this->get_uninstall_notallowed_reason() === '';
+    }
+
+    /**
+     * Cannot uninstall, provide the reason why.
+     *
+     * @return string
+     */
+    public function get_uninstall_notallowed_reason() {
         global $DB;
 
         if (in_array($this->name, ['manual', 'nologin', 'webservice', 'mnet'])) {
-            return false;
+            return get_string('uninstall_reason_notallowed_required', 'core_plugin', $this->component);
         }
 
-        return !$DB->record_exists('user', ['auth' => $this->name]);
+        if ($DB->record_exists('user', ['auth' => $this->name])) {
+            return get_string('uninstall_reason_notallowed_authusers', 'core_plugin');
+        }
+        return '';
     }
 
     #[\Override]

@@ -31,16 +31,20 @@ defined('MOODLE_INTERNAL') || die();
  * Class for calendar type plugins.
  */
 class calendartype extends base {
-
     public function is_uninstall_allowed() {
-        // We can delete all calendar types, except Gregorian. Gregorian comes with core and was the calendar
-        // type used before the calendar types were introduced as plugins in Moodle. If all calendar types were
-        // deleted then Moodle would break completely wherever any dates are displayed.
-        if ($this->name !== 'gregorian') {
-            return true;
-        }
+        return $this->get_uninstall_notallowed_reason() === '';
+    }
 
-        return false;
+    /**
+     * Cannot uninstall, provide the reason why.
+     *
+     * @return string
+     */
+    public function get_uninstall_notallowed_reason() {
+        if ($this->name == 'gregorian') {
+            return get_string('uninstall_reason_notallowed_required', 'core_plugin', $this->component);
+        }
+        return '';
     }
 
     public function get_settings_section_name() {
@@ -62,10 +66,16 @@ class calendartype extends base {
 
         $settings = null;
         $systemcontext = \context_system::instance();
-        if (($hassiteconfig) &&
-            file_exists($this->full_path('settings.php'))) {
-            $settings = new admin_settingpage($section, $this->displayname,
-                'moodle/site:config', $this->is_enabled() === false);
+        if (
+            ($hassiteconfig) &&
+            file_exists($this->full_path('settings.php'))
+        ) {
+            $settings = new admin_settingpage(
+                $section,
+                $this->displayname,
+                'moodle/site:config',
+                $this->is_enabled() === false
+            );
             include($this->full_path('settings.php')); // This may also set $settings to null.
         }
         if ($settings) {

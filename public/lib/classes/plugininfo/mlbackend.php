@@ -33,15 +33,25 @@ defined('MOODLE_INTERNAL') || die();
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class mlbackend extends base {
-
     /**
      * Is uninstall allowed or not.
      *
      * @return bool
      */
     public function is_uninstall_allowed() {
+        return $this->get_uninstall_notallowed_reason() === '';
+    }
 
-        return !\core_analytics\manager::is_mlbackend_used('mlbackend_' . $this->name);
+    /**
+     * Cannot uninstall, provide the reason why.
+     *
+     * @return string
+     */
+    public function get_uninstall_notallowed_reason() {
+        if (\core_analytics\manager::is_mlbackend_used('mlbackend_' . $this->name)) {
+            return get_string('uninstall_reason_notallowed_inuse', 'core_plugin', $this->component);
+        }
+        return '';
     }
 
     /**

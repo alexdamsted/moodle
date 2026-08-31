@@ -32,19 +32,27 @@ defined('MOODLE_INTERNAL') || die();
  */
 class theme extends base {
     public function is_uninstall_allowed() {
+        return $this->get_uninstall_notallowed_reason() === '';
+    }
+
+    /**
+     * Cannot uninstall, provide the reason why.
+     *
+     * @return string
+     */
+    public function get_uninstall_notallowed_reason() {
         global $CFG;
 
         if ($this->name === 'boost') {
             // All of these are protected for now.
-            return false;
+            return get_string('uninstall_reason_notallowed_required', 'core_plugin', $this->component);
         }
 
-        if (!empty($CFG->theme) and $CFG->theme === $this->name) {
+        if (!empty($CFG->theme) && $CFG->theme === $this->name) {
             // Cannot uninstall default theme.
-            return false;
+            return get_string('uninstall_reason_notallowed_required', 'core_plugin', $this->component);
         }
-
-        return true;
+        return '';
     }
 
     /**
@@ -58,11 +66,11 @@ class theme extends base {
     public function uninstall_cleanup() {
         global $DB;
 
-        $DB->set_field('course', 'theme', '', array('theme'=>$this->name));
-        $DB->set_field('course_categories', 'theme', '', array('theme'=>$this->name));
-        $DB->set_field('cohort', 'theme', '', array('theme' => $this->name));
-        $DB->set_field('user', 'theme', '', array('theme'=>$this->name));
-        $DB->set_field('mnet_host', 'theme', '', array('theme'=>$this->name));
+        $DB->set_field('course', 'theme', '', ['theme' => $this->name]);
+        $DB->set_field('course_categories', 'theme', '', ['theme' => $this->name]);
+        $DB->set_field('cohort', 'theme', '', ['theme' => $this->name]);
+        $DB->set_field('user', 'theme', '', ['theme' => $this->name]);
+        $DB->set_field('mnet_host', 'theme', '', ['theme' => $this->name]);
 
         if (get_config('core', 'thememobile') === $this->name) {
             unset_config('thememobile');

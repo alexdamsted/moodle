@@ -29,8 +29,16 @@ defined('MOODLE_INTERNAL') || die();
  * Class for admin tool plugins
  */
 class cachelock extends base {
-
     public function is_uninstall_allowed() {
-        return false;
+        return $this->get_uninstall_notallowed_reason() === '';
+    }
+
+    /**
+     * Cannot uninstall, provide the reason why.
+     *
+     * @return string
+     */
+    public function get_uninstall_notallowed_reason() {
+        return get_string('uninstall_reason_notallowed_required', 'core_plugin', $this->component);
     }
 }

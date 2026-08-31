@@ -30,7 +30,6 @@ use moodle_url;
  * Class for question behaviours.
  */
 class qbehaviour extends base {
-
     public static function plugintype_supports_disabling(): bool {
         return true;
     }
@@ -42,15 +41,15 @@ class qbehaviour extends base {
     public static function get_enabled_plugins() {
         $plugins = core_plugin_manager::instance()->get_installed_plugins('qbehaviour');
         if (!$plugins) {
-            return array();
+            return [];
         }
         if ($disabled = get_config('question', 'disabledbehaviours')) {
             $disabled = explode(',', $disabled);
         } else {
-            $disabled = array();
+            $disabled = [];
         }
 
-        $enabled = array();
+        $enabled = [];
         foreach ($plugins as $plugin => $version) {
             if (in_array($plugin, $disabled)) {
                 continue;
@@ -89,14 +88,26 @@ class qbehaviour extends base {
     }
 
     public function is_uninstall_allowed() {
+        return $this->get_uninstall_notallowed_reason() === '';
+    }
+
+    /**
+     * Cannot uninstall, provide the reason why.
+     *
+     * @return string
+     */
+    public function get_uninstall_notallowed_reason() {
         global $DB;
 
         if ($this->name === 'missing') {
             // qbehaviour_missing is used by the system. It cannot be uninstalled.
-            return false;
+            return get_string('uninstall_reason_notallowed_required', 'core_plugin', $this->component);
         }
 
-        return !$DB->record_exists('question_attempts', array('behaviour' => $this->name));
+        if ($DB->record_exists('question_attempts', ['behaviour' => $this->name])) {
+            return get_string('uninstall_reason_notallowed_linkedquestionattempts', 'core_plugin', $this->component);
+        }
+        return '';
     }
 
     /**
@@ -112,7 +123,7 @@ class qbehaviour extends base {
             $disabledbehaviours = explode(',', $disabledbehaviours);
             $disabledbehaviours = array_unique($disabledbehaviours);
         } else {
-            $disabledbehaviours = array();
+            $disabledbehaviours = [];
         }
         if (($key = array_search($this->name, $disabledbehaviours)) !== false) {
             unset($disabledbehaviours[$key]);
@@ -123,7 +134,7 @@ class qbehaviour extends base {
             $behaviourorder = explode(',', $behaviourorder);
             $behaviourorder = array_unique($behaviourorder);
         } else {
-            $behaviourorder = array();
+            $behaviourorder = [];
         }
         if (($key = array_search($this->name, $behaviourorder)) !== false) {
             unset($behaviourorder[$key]);

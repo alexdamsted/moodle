@@ -120,10 +120,19 @@ class enrol extends base {
 
     #[\Override]
     public function is_uninstall_allowed() {
+        return $this->get_uninstall_notallowed_reason() === '';
+    }
+
+    /**
+     * Cannot uninstall, provide the reason why.
+     *
+     * @return string
+     */
+    public function get_uninstall_notallowed_reason() {
         if ($this->name === 'manual') {
-            return false;
+            return get_string('uninstall_reason_notallowed_required', 'core_plugin', $this->component);
         }
-        return true;
+        return '';
     }
 
     #[\Override]

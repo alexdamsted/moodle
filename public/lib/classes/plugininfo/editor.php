@@ -127,11 +127,15 @@ class editor extends base {
 
     #[\Override]
     public function is_uninstall_allowed() {
+        return $this->get_uninstall_notallowed_reason() === '';
+    }
+
+    #[\Override]
+    public function get_uninstall_notallowed_reason() {
         if ($this->name === 'textarea') {
-            return false;
-        } else {
-            return true;
+            return get_string('uninstall_reason_notallowed_required', 'core_plugin', $this->component);
         }
+        return '';
     }
 
     #[\Override]

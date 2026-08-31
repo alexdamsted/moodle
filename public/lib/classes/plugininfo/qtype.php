@@ -89,14 +89,26 @@ class qtype extends base {
 
     #[\Override]
     public function is_uninstall_allowed() {
+        return $this->get_uninstall_notallowed_reason() === '';
+    }
+
+    /**
+     * Cannot uninstall, provide the reason why.
+     *
+     * @return string
+     */
+    public function get_uninstall_notallowed_reason() {
         global $DB;
 
         if ($this->name === 'missingtype') {
-            // We use `qtype_missingtype` internally. It cannot be uninstalled.
-            return false;
+            // Plugin qtype_missingtype is used by the system. It cannot be uninstalled.
+            return get_string('uninstall_reason_notallowed_required', 'core_plugin', $this->component);
         }
 
-        return !$DB->record_exists('question', ['qtype' => $this->name]);
+        if ($DB->record_exists('question', ['qtype' => $this->name])) {
+            return get_string('uninstall_reason_notallowed_qtypeexists', 'core_plugin', $this->component);
+        }
+        return '';
     }
 
     #[\Override]

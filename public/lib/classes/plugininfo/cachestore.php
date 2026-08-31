@@ -29,14 +29,22 @@ defined('MOODLE_INTERNAL') || die();
  * Class for cache store plugins
  */
 class cachestore extends base {
-
     public function is_uninstall_allowed() {
+        return $this->get_uninstall_notallowed_reason() === '';
+    }
+
+    /**
+     * Cannot uninstall, provide the reason why.
+     *
+     * @return string
+     */
+    public function get_uninstall_notallowed_reason() {
         $instance = \cache_config::instance();
         foreach ($instance->get_all_stores() as $store) {
             if ($store['plugin'] == $this->name) {
-                return false;
+                return get_string('uninstall_reason_notallowed_required', 'core_plugin', $this->component);
             }
         }
-        return true;
+        return '';
     }
 }

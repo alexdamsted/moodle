@@ -38,7 +38,6 @@ defined('MOODLE_INTERNAL') || die();
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class ltiservice extends base {
-
     /**
      * Should there be a way to uninstall the plugin via the administration UI?
      *
@@ -47,13 +46,18 @@ class ltiservice extends base {
      * @return boolean
      */
     public function is_uninstall_allowed() {
-
-        if ($this->is_standard()) {
-            return false;
-        }
-
-        return true;
-
+        return $this->get_uninstall_notallowed_reason() === '';
     }
 
+    /**
+     * Cannot uninstall, provide the reason why.
+     *
+     * @return string
+     */
+    public function get_uninstall_notallowed_reason() {
+        if ($this->is_standard()) {
+            return get_string('uninstall_reason_notallowed_required', 'core_plugin', $this->component);
+        }
+        return '';
+    }
 }

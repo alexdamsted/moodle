@@ -28,7 +28,6 @@ use stdClass;
  * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class factor extends \core\plugininfo\base {
-
     /** @var string */
     const STATE_UNKNOWN = 'unknown';
 
@@ -54,7 +53,7 @@ class factor extends \core\plugininfo\base {
         $factors = \core_plugin_manager::instance()->get_plugins_of_type('factor');
 
         foreach ($factors as $factor) {
-            $classname = '\\factor_'.$factor->name.'\\factor';
+            $classname = '\\factor_' . $factor->name . '\\factor';
             if (class_exists($classname)) {
                 $return[] = new $classname($factor->name);
             }
@@ -98,7 +97,7 @@ class factor extends \core\plugininfo\base {
 
         foreach ($factors as $factor) {
             if ($name == $factor->name) {
-                $classname = '\\factor_'.$factor->name.'\\factor';
+                $classname = '\\factor_' . $factor->name . '\\factor';
                 if (class_exists($classname)) {
                     return new $classname($factor->name);
                 }
@@ -210,7 +209,6 @@ class factor extends \core\plugininfo\base {
             if ($factor->has_input()) {
                 $loginfactors[] = $factor;
             }
-
         }
         return $loginfactors;
     }
@@ -337,13 +335,17 @@ class factor extends \core\plugininfo\base {
         ]);
     }
 
-    /**
-     * These subplugins can be uninstalled.
-     *
-     * @return bool
-     */
-    public function is_uninstall_allowed(): bool {
-        return $this->name !== 'nosetup';
+    #[\Override]
+    public function is_uninstall_allowed() {
+        return $this->get_uninstall_notallowed_reason() === '';
+    }
+
+    #[\Override]
+    public function get_uninstall_notallowed_reason() {
+        if ($this->name === 'nosetup') {
+            return get_string('uninstall_reason_notallowed_required', 'core_plugin', $this->component);
+        }
+        return '';
     }
 
     #[\Override]
@@ -412,7 +414,7 @@ class factor extends \core\plugininfo\base {
      */
     public static function user_has_more_than_one_active_factors(): bool {
         $factors = self::get_active_user_factor_types();
-        $count = count(array_filter($factors, function($factor) {
+        $count = count(array_filter($factors, function ($factor) {
             // Include only user factors that can be set.
             return $factor->has_input();
         }));

@@ -165,11 +165,19 @@ class repository extends base {
 
     #[\Override]
     public function is_uninstall_allowed() {
+        return $this->get_uninstall_notallowed_reason() === '';
+    }
+
+    /**
+     * Cannot uninstall, provide the reason why.
+     *
+     * @return string
+     */
+    public function get_uninstall_notallowed_reason() {
         if ($this->name === 'upload' || $this->name === 'coursefiles' || $this->name === 'user' || $this->name === 'recent') {
-            return false;
-        } else {
-            return true;
+            return get_string('uninstall_reason_notallowed_required', 'core_plugin', $this->component);
         }
+        return '';
     }
 
     /**

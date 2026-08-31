@@ -30,7 +30,18 @@ defined('MOODLE_INTERNAL') || die();
 
 class quizaccess extends base {
     public function is_uninstall_allowed() {
-        // Only allow uninstall of non-core access rules.
-        return !$this->is_standard();
+        return $this->get_uninstall_notallowed_reason() === '';
+    }
+
+    /**
+     * Cannot uninstall, provide the reason why.
+     *
+     * @return string
+     */
+    public function get_uninstall_notallowed_reason() {
+        if ($this->is_standard()) {
+            return get_string('uninstall_reason_notallowed_required', 'core_plugin', $this->component);
+        }
+        return '';
     }
 }
