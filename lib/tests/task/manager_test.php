@@ -555,4 +555,233 @@ final class manager_test extends \advanced_testcase {
         $taskfromqueue->execute();
         manager::adhoc_task_complete($taskfromqueue);
     }
+
+    /**
+     * Test that adhoc_task_delayed schedules a task correctly, for both exponential
+     * backoff (null delay) and an explicit soft retry delay.
+     *
+     * @covers \core\task\manager::adhoc_task_delayed
+     * @dataProvider adhoc_task_delayed_provider
+     * @param int|null $softretrydelay The soft retry delay to set (null for exponential backoff).
+     * @param int $expectednextruntime The expected next run time after the delay.
+     */
+    public function test_adhoc_task_delayed(?int $softretrydelay, int $expectednextruntime): void {
+        global $DB;
+
+        $this->resetAfterTest();
+
+        // Freeze time.
+        $clock = $this->createMock(\core\clock::class);
+        $clock->method('time')->willReturn(1000);
+        \core\di::set(\core\clock::class, $clock);
+
+        // Create and queue task.
+        $task = new adhoc_test_task();
+        $taskid = \core\task\manager::queue_adhoc_task($task);
+
+        // Reload task from DB.
+        $record = $DB->get_record('task_adhoc', ['id' => $taskid], '*', MUST_EXIST);
+        $task = \core\task\manager::adhoc_task_from_record($record);
+
+        // Simulate calling set_soft_retry_delay() from within execute().
+        $task->set_soft_retry_delay($softretrydelay);
+
+        // Fake an initial next run time (first retry).
+        $task->set_next_run_time(1000);
+
+        // Lock the task properly.
+        $lockfactory = \core\lock\lock_config::get_lock_factory('cron');
+        $lock = $lockfactory->get_lock('adhoc_' . $taskid, 10);
+        $task->set_lock($lock);
+
+        // Get the initialattempts value before we delay the task.
+        $initialattempts = $task->get_attempts_available();
+
+        // Call delayed retry.
+        ob_start();
+        \core\task\manager::adhoc_task_delayed($task);
+        ob_end_clean();
+
+        // Reload after update.
+        $record = $DB->get_record('task_adhoc', ['id' => $taskid], '*', MUST_EXIST);
+        $task = \core\task\manager::adhoc_task_from_record($record);
+
+        $this->assertEquals($expectednextruntime, $task->get_next_run_time());
+
+        // Metadata reset.
+        $this->assertEmpty($task->get_timestarted());
+        $this->assertEmpty($task->get_hostname());
+        $this->assertEmpty($task->get_pid());
+
+        // Attempts should decrement.
+        $this->assertEquals($initialattempts - 1, $task->get_attempts_available());
+
+        // Fail delay must be 0 — delayed tasks are not failures.
+        $this->assertEquals(0, $task->get_fail_delay());
+    }
+
+    /**
+     * Test that adhoc_task_delayed() marks a task as failed once it has exhausted its
+     * last available attempt.
+     *
+     * @covers \core\task\manager::adhoc_task_delayed
+     */
+    public function test_adhoc_task_delayed_marks_failed_when_attempts_exhausted(): void {
+        global $DB;
+
+        $this->resetAfterTest();
+
+        // Freeze time.
+        $clock = $this->createMock(\core\clock::class);
+        $clock->method('time')->willReturn(1000);
+        \core\di::set(\core\clock::class, $clock);
+
+        // Create and queue task.
+        $task = new adhoc_test_task();
+        $taskid = \core\task\manager::queue_adhoc_task($task);
+
+        // Reload task from DB.
+        $record = $DB->get_record('task_adhoc', ['id' => $taskid], '*', MUST_EXIST);
+        $task = \core\task\manager::adhoc_task_from_record($record);
+
+        // Simulate this being the task's last available attempt.
+        $task->set_attempts_available(1);
+        $task->set_soft_retry_delay(120);
+        $task->set_next_run_time(1000);
+
+        $lockfactory = \core\lock\lock_config::get_lock_factory('cron');
+        $lock = $lockfactory->get_lock('adhoc_' . $taskid, 10);
+        $task->set_lock($lock);
+
+        ob_start();
+        \core\task\manager::adhoc_task_delayed($task);
+        ob_end_clean();
+
+        // Reload after update.
+        $record = $DB->get_record('task_adhoc', ['id' => $taskid], '*', MUST_EXIST);
+        $task = \core\task\manager::adhoc_task_from_record($record);
+
+        // All attempts are now used up.
+        $this->assertEquals(0, $task->get_attempts_available());
+
+        // The task must now be flagged as a genuine failure, not faildelay = 0.
+        $this->assertEquals(120, $task->get_fail_delay());
+    }
+
+    /**
+     * Data provider for test_adhoc_task_delayed.
+     *
+     * @return array
+     */
+    public static function adhoc_task_delayed_provider(): array {
+        return [
+            // Exponential: retrycount = max(0, 12 - attemptsavailable(12)) = 0, delay = min(86400, 60 * pow(2, 0)) = 60.
+            'exponential_backoff' => [
+                'softretrydelay'      => null,
+                'expectednextruntime' => 1060,
+            ],
+            // Explicit: delay = 120, so nextruntime = now(1000) + 120.
+            'explicit_delay' => [
+                'softretrydelay'      => 120,
+                'expectednextruntime' => 1120,
+            ],
+        ];
+    }
+
+    /**
+     * Test that scheduled tasks can have their next run time set.
+     */
+    public function test_set_scheduled_task_nextruntime(): void {
+        global $DB;
+
+        $this->resetAfterTest();
+        $this->preventResetByRollback();
+        // Freeze at a fixed midday time. The task below runs at 00:00, and passing no
+        // argument freezes at the real time, so during hour 00 the task's next run is
+        // only seconds away and the assertNull() below fails. See MDL-89100.
+        $clock = $this->mock_clock_with_frozen(
+            (new \DateTimeImmutable('2026-01-01 12:00:00', \core_date::get_server_timezone_object()))->getTimestamp(),
+        );
+
+        // Disable all the tasks, so we can insert our own and be sure it's the only one being run.
+        $DB->set_field('task_scheduled', 'disabled', 1);
+
+        $task = new scheduled_test_task();
+        $task->set_month('*');
+        $task->set_hour('0');
+        $task->set_next_run_time($clock->time() - HOURSECS);
+        $DB->insert_record('task_scheduled', manager::record_from_scheduled_task($task));
+
+        $first = \core\task\manager::get_next_scheduled_task($clock->time());
+        $this->assertNotNull($first);
+        manager::scheduled_task_complete($first);
+
+        $next = \core\task\manager::get_next_scheduled_task($clock->time() + 10);
+        $this->assertNull($next);
+
+        $this->assertTrue(manager::set_scheduled_task_nextruntime($first, $clock->time() + 20));
+
+        $next = \core\task\manager::get_next_scheduled_task($clock->time() + 30);
+        $this->assertNotNull($next);
+        manager::scheduled_task_complete($next);
+    }
+
+    /**
+     * Test that a running task cannot have its next run time changed.
+     */
+    public function test_set_scheduled_task_nextruntime_rejects_running_task(): void {
+        global $DB;
+
+        $this->resetAfterTest();
+        $clock = $this->mock_clock_with_frozen();
+        set_config('lock_factory', '\core\lock\db_record_lock_factory');
+
+        // Disable all the tasks, so we can insert our own and be sure it is the only one being run.
+        $DB->set_field('task_scheduled', 'disabled', 1);
+
+        $task = new scheduled_test_task();
+        $originalnextruntime = $clock->time() + HOURSECS;
+        $task->set_next_run_time($originalnextruntime);
+        $classname = manager::get_canonical_class_name($task);
+        $DB->insert_record('task_scheduled', manager::record_from_scheduled_task($task));
+
+        // Reject the change when the task has running metadata, even if its execution lock has gone stale.
+        $DB->set_field('task_scheduled', 'timestarted', $clock->time(), ['classname' => $classname]);
+        $this->assertFalse(manager::set_scheduled_task_nextruntime($task, $clock->time() - HOURSECS));
+        $DB->set_field('task_scheduled', 'timestarted', null, ['classname' => $classname]);
+
+        // Also reject the change during the window after the execution lock is acquired but before metadata is recorded.
+        $lockfactory = \core\lock\lock_config::get_lock_factory('cron');
+        $lock = $lockfactory->get_lock($classname, 10);
+        $this->assertNotFalse($lock);
+        try {
+            $result = manager::set_scheduled_task_nextruntime($task, $clock->time() - HOURSECS);
+        } finally {
+            $lock->release();
+        }
+
+        $this->assertFalse($result);
+        $this->assertSame(
+            $originalnextruntime,
+            (int)$DB->get_field('task_scheduled', 'nextruntime', ['classname' => $classname]),
+        );
+    }
+
+    /**
+     * Test enabling and disabling cron.
+     */
+    public function test_cron_enabled(): void {
+        $this->resetAfterTest();
+
+        // Check that cron is enabled by default.
+        $this->assertTrue(\core\task\manager::is_cron_enabled());
+
+        // Disable cron and check again.
+        \core\task\manager::disable_cron();
+        $this->assertFalse(\core\task\manager::is_cron_enabled());
+
+        // Enable cron and check again.
+        \core\task\manager::enable_cron();
+        $this->assertTrue(\core\task\manager::is_cron_enabled());
+    }
 }

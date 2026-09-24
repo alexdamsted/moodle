@@ -1127,6 +1127,89 @@ class manager {
     }
 
     /**
+     * If a task is waiting on an external event then you can set a retry delay,
+     * which behaves very similar to throwing an exception and retrying with a
+     * fail delay except it will not be treated as an error.
+     *
+     * The number of attempts is still decremented so it cannot be retried indefinitely.
+     * You can specify a delay in seconds, or if not set it will default to an
+     * exponential delay similar to the faildelay.
+     *
+     * @param \core\task\adhoc_task $task
+     */
+    public static function adhoc_task_delayed(\core\task\adhoc_task $task): void {
+        global $DB;
+
+        // The time now.
+        $clock = \core\di::get(\core\clock::class);
+        $now = $clock->time();
+
+        // Is there a custom delay?
+        $delay = $task->get_soft_retry_delay();
+
+        // Exponential delay.
+        if ($delay === null) {
+            $retrycount = max(0, 12 - $task->get_attempts_available());
+            // Cap exponent to 11 as this will exceed 24 hours.
+            $delay = min(86400, 60 * (int) pow(2, min($retrycount, 11)));
+        }
+
+        // Subtract one from the available adhoc task attempts.
+        $exhausted = false;
+        if ($task->get_attempts_available() > 0) {
+            $task->set_attempts_available($task->get_attempts_available() - 1);
+            $exhausted = ($task->get_attempts_available() === 0);
+        }
+
+        // Schedule next adhoc task run.
+        $task->set_next_run_time($now + $delay);
+
+        mtrace(
+            "Adhoc task delayed: " . get_class($task) .
+            " until " . ($now + $delay) .
+            " (delay {$delay}s)"
+        );
+
+        // Finalise log. Failed if the task has run out of attempts.
+        logmanager::finalise_log($exhausted);
+
+        // Reset adhoc task metadata.
+        $task->set_timestarted();
+        $task->set_hostname();
+        $task->set_pid();
+
+        if ($exhausted) {
+            mtrace(
+                "Adhoc task has run out of soft retry attempts and will be marked as failed: " .
+                get_class($task)
+            );
+
+            // Mark the task as failed as the attempts are exhausted.
+            $task->set_fail_delay($delay);
+
+            // Dispatch hook when max fail delay has been reached.
+            if ($delay >= 86400) {
+                $hook = new \core\hook\task\after_failed_task_max_delay(
+                    task: $task,
+                );
+                \core\di::get(\core\hook\manager::class)->dispatch($hook);
+            }
+        } else {
+            // This is not a failure, the task still has attempts left.
+            $task->set_fail_delay(0);
+        }
+
+        // Persist modified adhoc task to DB.
+        $record = self::record_from_adhoc_task($task);
+        $DB->update_record('task_adhoc', $record);
+
+        // Release locks.
+        $task->release_concurrency_lock();
+        $task->get_lock()->release();
+        self::$runningtask = null;
+    }
+
+    /**
      * This function indicates that an adhoc task was not completed successfully and should be retried.
      *
      * @param \core\task\adhoc_task $task
